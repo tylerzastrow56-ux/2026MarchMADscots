@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Leaderboard — 2026 NCAA Mascot Bracket</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Source Sans 3',sans-serif;background:#fff;color:#000;padding-bottom:60px}
+.hdr{background:#fff;border-bottom:2px solid #000;padding:14px 20px 10px;text-align:center}
+.hdr h1{font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;color:#000;letter-spacing:3px;text-transform:uppercase}
+.hdr p{font-size:11px;color:#555;margin-top:2px;letter-spacing:2px;text-transform:uppercase}
+.wrap{max-width:780px;margin:0 auto;padding:16px 14px 60px}
+.top-nav{display:flex;gap:16px;margin-bottom:16px;align-items:center}
+.top-nav a{font-family:'Oswald',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#000;text-decoration:none;border-bottom:1px solid #000}
+.refresh-btn{font-family:'Oswald',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;background:transparent;border:1px solid #000;color:#000;border-radius:3px;padding:5px 12px;cursor:pointer;margin-left:auto}
+.refresh-btn:hover{background:#000;color:#fff}
+.stats-bar{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+.stat-box{background:#f9f9f9;border:1px solid #ddd;border-radius:6px;padding:10px 14px;flex:1;min-width:80px;text-align:center}
+.stat-num{font-family:'Oswald',sans-serif;font-size:24px;font-weight:700;color:#000}
+.stat-lbl{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.lb-table{width:100%;border-collapse:collapse}
+.lb-table th{font-family:'Oswald',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#888;padding:6px 10px;text-align:left;border-bottom:2px solid #000;white-space:nowrap}
+.lb-table th.r{text-align:right}
+.lb-table td{padding:8px 10px;border-bottom:1px solid #eee;vertical-align:middle}
+.lb-table tr:hover td{background:#fafafa}
+.rank{font-family:'Oswald',sans-serif;font-size:16px;font-weight:700;width:36px}
+.name{font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;text-transform:uppercase}
+.champ{font-size:11px;color:#666}
+.score{font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;text-align:right}
+.maxleft{font-size:10px;color:#aaa;text-align:right}
+.prog-wrap{background:#eee;border-radius:2px;height:3px;margin-top:4px}
+.prog-fill{background:#000;height:3px;border-radius:2px}
+.expand-row td{padding:0;border-bottom:none}
+.expand-inner{padding:10px 14px 14px;background:#fafafa;border-bottom:1px solid #eee}
+.expand-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:4px;margin-top:8px}
+.eg{font-size:11px;display:flex;gap:6px;align-items:center}
+.eg .gid{font-family:'Oswald',sans-serif;font-size:9px;color:#aaa;width:28px;flex-shrink:0}
+.eg .pick{flex:1;color:#333}
+.eg .correct{color:#080;font-weight:600}
+.eg .wrong{color:#c00;text-decoration:line-through}
+.eg .pending{color:#aaa}
+.eg .pts{font-family:'Oswald',sans-serif;font-size:9px;font-weight:700;width:20px;text-align:right}
+.msg{text-align:center;padding:40px 20px;font-size:14px;color:#888;font-family:'Oswald',sans-serif;letter-spacing:2px;text-transform:uppercase}
+.errmsg{text-align:center;padding:30px 20px;font-size:12px;color:#c00;line-height:1.8}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <h1>2026 NCAA Mascot Bracket</h1>
+  <p id="last-update">Leaderboard</p>
+</div>
+<div class="wrap">
+  <div class="top-nav">
+    <a href="index.html">&#8592; Enter Bracket</a>
+    <button class="refresh-btn" onclick="loadAll()">&#8635; Refresh</button>
+  </div>
+  <div id="content"><div class="msg">Loading&hellip;</div></div>
+</div>
+<script>
+const SUPA_URL='https://bfqvcnchmpyztovcgkbd.supabase.co',SUPA_KEY='sb_publishable_ucCXKlrFtpA5c-WoNUDpsQ_WwEzJg4W';
+
+async function sbFetch(path) {
+  const r = await fetch(SUPA_URL + path, {
+    headers: {'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY}
+  });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}
+
+const POINTS = [1,2,4,8,16,32];
+const ROUND_NAMES = ['R64','R32','Sweet 16','Elite 8','Final Four','Champ'];
+const ROUND_GAME_IDS = [
+  ['E1','E2','E3','E4','E5','E6','E7','E8','S1','S2','S3','S4','S5','S6','S7','S8','W1','W2','W3','W4','W5','W6','W7','W8','M1','M2','M3','M4','M5','M6','M7','M8'],
+  ['ER1','ER2','ER3','ER4','SR1','SR2','SR3','SR4','WR1','WR2','WR3','WR4','MR1','MR2','MR3','MR4'],
+  ['ES1','ES2','SS1','SS2','WS1','WS2','MS1','MS2'],
+  ['EE1','SE1','WE1','ME1'],
+  ['FF1','FF2'],
+  ['CH1']
+];
+
+let brackets = [], results = {}, expandedIdx = null;
+
+async function loadAll() {
+  document.getElementById('last-update').textContent = 'Loading...';
+  try {
+    const [bRows, rRows] = await Promise.all([
+      sbFetch('/rest/v1/brackets?select=*&order=created_at.asc'),
+      sbFetch('/rest/v1/results?select=*')
+    ]);
+    brackets = bRows || [];
+    results = {};
+    (rRows || []).forEach(r => { results[r.game_id] = r.winning_team; });
+    document.getElementById('last-update').textContent = 'Updated ' + new Date().toLocaleTimeString() + ' — ' + brackets.length + ' entries';
+    render();
+  } catch(e) {
+    console.error('Leaderboard load error:', e);
+    document.getElementById('content').innerHTML =
+      '<div class="errmsg"><strong>Could not load data</strong><br>' + e.message +
+      '<br><br><small>If this persists, check that your GitHub Pages URL is in<br>Supabase &rarr; Authentication &rarr; URL Configuration &rarr; Allowed Origins</small></div>';
+  }
+}
+
+function scoreEntry(picks) {
+  let total = 0, byRound = [0,0,0,0,0,0], correct = 0, gamesScored = 0;
+  ROUND_GAME_IDS.forEach((ids, ri) => {
+    ids.forEach(gid => {
+      const pick = picks[gid], actual = results[gid];
+      if (actual) {
+        gamesScored++;
+        if (pick === actual) { total += POINTS[ri]; byRound[ri] += POINTS[ri]; correct++; }
+      }
+    });
+  });
+  return {total, byRound, correct, gamesScored};
+}
+
+function maxPossible(picks) {
+  let possible = 0;
+  ROUND_GAME_IDS.forEach((ids, ri) => {
+    ids.forEach(gid => {
+      if (!results[gid] && picks[gid]) possible += POINTS[ri];
+    });
+  });
+  return possible;
+}
+
+function render() {
+  const entries = brackets.filter(b => b.submitted === true || b.submitted === 'true' || b.champion);
+  const gamesPlayed = Object.keys(results).length;
+
+  const scored = entries.map(b => {
+    const s = scoreEntry(b.picks || {});
+    const mp = maxPossible(b.picks || {});
+    return {...b, ...s, maxPossible: mp};
+  }).sort((a, b) => b.total - a.total || b.maxPossible - a.maxPossible);
+
+  let html = '';
+
+  // Stats bar
+  html += '<div class="stats-bar">';
+  html += '<div class="stat-box"><div class="stat-num">' + brackets.length + '</div><div class="stat-lbl">Entries</div></div>';
+  html += '<div class="stat-box"><div class="stat-num">' + gamesPlayed + '</div><div class="stat-lbl">Games Played</div></div>';
+  html += '<div class="stat-box"><div class="stat-num">' + (63 - gamesPlayed) + '</div><div class="stat-lbl">Remaining</div></div>';
+  html += '<div class="stat-box"><div class="stat-num">' + (scored[0] ? scored[0].total : 0) + '</div><div class="stat-lbl">Top Score</div></div>';
+  html += '</div>';
+
+  if (scored.length === 0) {
+    html += '<div class="msg">No entries yet</div>';
+    document.getElementById('content').innerHTML = html;
+    return;
+  }
+
+  // Table
+  html += '<table class="lb-table"><thead><tr>';
+  html += '<th></th><th>Name</th><th>Champion Pick</th>';
+  ROUND_NAMES.forEach(r => { html += '<th class="r">' + r + '</th>'; });
+  html += '<th class="r">Total</th><th class="r">Max Left</th>';
+  html += '</tr></thead><tbody>';
+
+  scored.forEach((entry, i) => {
+    const rank = i + 1;
+    const medal = rank === 1 ? '&#127945;' : rank === 2 ? '&#127946;' : rank === 3 ? '&#127947;' : rank;
+    const isExpanded = expandedIdx === i;
+    const accPct = entry.gamesScored > 0 ? Math.round(entry.correct / entry.gamesScored * 100) : 0;
+
+    html += '<tr style="cursor:pointer" onclick="toggleExpand(' + i + ')">';
+    html += '<td class="rank">' + medal + '</td>';
+    html += '<td><div class="name">' + entry.player_name + '</div>';
+    html += '<div class="prog-wrap"><div class="prog-fill" style="width:' + accPct + '%"></div></div></td>';
+    html += '<td><div class="champ">' + (entry.champion || '&mdash;') + '</div></td>';
+    entry.byRound.forEach(pts => {
+      html += '<td class="r"><span style="font-family:Oswald,sans-serif;font-weight:600;font-size:13px;color:' + (pts > 0 ? '#000' : '#ccc') + '">' + (pts || '&mdash;') + '</span></td>';
+    });
+    html += '<td class="score">' + entry.total + '</td>';
+    html += '<td class="maxleft">+' + entry.maxPossible + '</td>';
+    html += '</tr>';
+
+    if (isExpanded) {
+      html += '<tr class="expand-row"><td colspan="10"><div class="expand-inner">';
+      html += '<div style="font-family:Oswald,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#888;margin-bottom:8px">';
+      html += entry.correct + ' correct of ' + entry.gamesScored + ' played &mdash; ' + entry.total + ' pts</div>';
+      html += '<div class="expand-grid">';
+      ROUND_GAME_IDS.forEach((ids, ri) => {
+        ids.forEach(gid => {
+          const pick = (entry.picks || {})[gid];
+          const actual = results[gid];
+          if (!pick) return;
+          const cls = !actual ? 'pending' : pick === actual ? 'correct' : 'wrong';
+          const pts = actual && pick === actual ? '+' + POINTS[ri] : '';
+          html += '<div class="eg"><span class="gid">' + gid + '</span><span class="pick ' + cls + '">' + pick + '</span><span class="pts">' + pts + '</span></div>';
+        });
+      });
+      html += '</div></div></td></tr>';
+    }
+  });
+
+  html += '</tbody></table>';
+  document.getElementById('content').innerHTML = html;
+}
+
+function toggleExpand(i) {
+  expandedIdx = expandedIdx === i ? null : i;
+  render();
+}
+
+loadAll();
+setInterval(loadAll, 30000);
+</script>
+</body>
+</html>

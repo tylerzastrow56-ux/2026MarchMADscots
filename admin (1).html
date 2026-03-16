@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Admin — 2026 NCAA Mascot Bracket</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Source Sans 3',sans-serif;background:#fff;color:#000;padding-bottom:60px}
+.hdr{background:#000;color:#fff;padding:14px 20px;text-align:center}
+.hdr h1{font-family:'Oswald',sans-serif;font-size:20px;font-weight:700;letter-spacing:3px;text-transform:uppercase}
+.hdr p{font-size:11px;color:#aaa;margin-top:2px;letter-spacing:2px;text-transform:uppercase}
+.wrap{max-width:700px;margin:0 auto;padding:20px 16px}
+.login-box{max-width:360px;margin:60px auto;background:#f9f9f9;border:1px solid #ddd;border-radius:8px;padding:28px 24px;text-align:center}
+.login-box h2{font-family:'Oswald',sans-serif;font-size:18px;text-transform:uppercase;letter-spacing:2px;margin-bottom:16px}
+.login-box input{width:100%;font-size:14px;padding:10px 12px;border:1px solid #ccc;border-radius:4px;margin-bottom:10px;outline:none}
+.login-box input:focus{border-color:#000}
+.top-nav{display:flex;gap:16px;margin-bottom:4px;align-items:center;flex-wrap:wrap}
+.top-nav a{font-family:'Oswald',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#000;text-decoration:none;border-bottom:1px solid #000}
+.tabs{display:flex;gap:0;margin-bottom:20px;border-bottom:2px solid #000}
+.tab{font-family:'Oswald',sans-serif;font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;padding:8px 20px;cursor:pointer;border:none;background:transparent;color:#888;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .12s}
+.tab.active{color:#000;border-bottom-color:#000}
+.tab:hover{color:#000}
+.stitle{font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#000;border-bottom:1px solid #000;padding-bottom:5px;margin:18px 0 10px}
+.region-label{font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:3px;color:#888;text-transform:uppercase;margin:14px 0 6px}
+/* Game rows */
+.game-row{background:#f9f9f9;border:1px solid #ddd;border-radius:6px;padding:10px 12px;margin-bottom:6px}
+.game-row.is-set{border-color:#000;background:#f5f5f5}
+.game-meta{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.game-id{font-family:'Oswald',sans-serif;font-size:10px;font-weight:700;color:#aaa;width:32px;flex-shrink:0}
+.game-desc{font-size:11px;color:#888;flex:1;line-height:1.3}
+.winner-tag{font-family:'Oswald',sans-serif;font-size:9px;font-weight:700;letter-spacing:1px;background:#000;color:#fff;padding:2px 6px;border-radius:2px;text-transform:uppercase}
+.clear-btn{font-family:'Oswald',sans-serif;font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;background:transparent;border:1px solid #ccc;color:#aaa;border-radius:3px;padding:3px 8px;cursor:pointer;transition:all .12s}
+.clear-btn:hover{border-color:#c00;color:#c00}
+/* Radio team cards */
+.team-options{display:flex;gap:8px}
+.team-opt{flex:1;position:relative}
+.team-opt input[type=radio]{position:absolute;opacity:0;width:0;height:0}
+.team-opt label{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:7px 8px;border:1px solid #ddd;border-radius:5px;cursor:pointer;font-family:'Oswald',sans-serif;font-size:11px;font-weight:600;text-transform:uppercase;text-align:center;line-height:1.3;transition:all .12s;min-height:42px;color:#555;background:#fff}
+.team-opt label:hover{border-color:#000;color:#000;background:#fafafa}
+.team-opt input[type=radio]:checked + label{background:#000;color:#fff;border-color:#000}
+.seed-sm{font-size:9px;font-weight:400;opacity:.6;margin-bottom:1px}
+/* Entries tab */
+.entry-row{display:flex;align-items:center;background:#f9f9f9;border:1px solid #ddd;border-radius:6px;padding:8px 12px;margin-bottom:6px;gap:10px}
+.entry-name{font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;text-transform:uppercase;flex:1}
+.entry-champ{font-size:11px;color:#666;margin-top:2px}
+.entry-meta{font-size:10px;color:#aaa;text-align:right}
+.entry-submitted{font-family:'Oswald',sans-serif;font-size:9px;font-weight:700;letter-spacing:1px;background:#000;color:#fff;padding:2px 6px;border-radius:2px;text-transform:uppercase}
+.entry-draft{font-family:'Oswald',sans-serif;font-size:9px;font-weight:700;letter-spacing:1px;border:1px solid #ccc;color:#aaa;padding:2px 6px;border-radius:2px;text-transform:uppercase}
+.del-btn{font-family:'Oswald',sans-serif;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;background:transparent;border:1px solid #ccc;color:#aaa;border-radius:3px;padding:5px 10px;cursor:pointer;transition:all .12s;white-space:nowrap}
+.del-btn:hover{border-color:#c00;color:#c00;background:#fff5f5}
+.btn{font-family:'Oswald',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;border-radius:3px;padding:8px 16px;cursor:pointer;border:1px solid #000;background:#000;color:#fff;transition:all .12s}
+.btn:hover{background:#333}
+.status-ok{color:#080;font-size:11px;letter-spacing:1px;text-transform:uppercase}
+.status-err{color:#c00;font-size:11px}
+.hint{font-size:11px;color:#888;margin-bottom:16px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="hdr"><h1>2026 NCAA Bracket</h1><p>Admin Panel</p></div>
+<div id="root">
+  <div class="login-box">
+    <h2>Admin Login</h2>
+    <input type="password" id="pwd" placeholder="Password..." onkeydown="if(event.key==='Enter')login()">
+    <button class="btn" style="width:100%;margin-top:4px" onclick="login()">Enter</button>
+    <div id="login-err" style="color:#c00;font-size:12px;margin-top:8px"></div>
+  </div>
+</div>
+<script>
+const SUPA_URL='https://bfqvcnchmpyztovcgkbd.supabase.co',SUPA_KEY='sb_publishable_ucCXKlrFtpA5c-WoNUDpsQ_WwEzJg4W';
+const ADMIN_PWD='bracket2026';
+
+async function sbFetch(path,method='GET',body=null,extra={}){
+  const opts={method,headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':method==='POST'?'return=representation':'',...extra}};
+  if(body)opts.body=JSON.stringify(body);
+  const r=await fetch(SUPA_URL+path,opts);
+  if(!r.ok){const e=await r.text();throw new Error(r.status+': '+e);}
+  const t=await r.text();return t?JSON.parse(t):null;
+}
+
+// All 63 games with team1/team2 for radio buttons
+const ALL_GAMES=[
+  // EAST R64
+  {id:'E1',region:'East',round:'Round of 64',roundNum:0,team1:'Duke',seed1:1,team2:'Siena',seed2:16},
+  {id:'E2',region:'East',round:'Round of 64',roundNum:0,team1:'Ohio State',seed1:8,team2:'TCU',seed2:9},
+  {id:'E3',region:'East',round:'Round of 64',roundNum:0,team1:"St. John's",seed1:5,team2:'N. Iowa',seed2:12},
+  {id:'E4',region:'East',round:'Round of 64',roundNum:0,team1:'Kansas',seed1:4,team2:'Cal Baptist',seed2:13},
+  {id:'E5',region:'East',round:'Round of 64',roundNum:0,team1:'Louisville',seed1:6,team2:'South Florida',seed2:11},
+  {id:'E6',region:'East',round:'Round of 64',roundNum:0,team1:'Michigan State',seed1:3,team2:'N. Dakota St.',seed2:14},
+  {id:'E7',region:'East',round:'Round of 64',roundNum:0,team1:'UCLA',seed1:7,team2:'UCF',seed2:10},
+  {id:'E8',region:'East',round:'Round of 64',roundNum:0,team1:'UConn',seed1:2,team2:'Furman',seed2:15},
+  {id:'ER1',region:'East',round:'Round of 32',roundNum:1,team1:'E1 Winner',seed1:'',team2:'E2 Winner',seed2:''},
+  {id:'ER2',region:'East',round:'Round of 32',roundNum:1,team1:'E3 Winner',seed1:'',team2:'E4 Winner',seed2:''},
+  {id:'ER3',region:'East',round:'Round of 32',roundNum:1,team1:'E5 Winner',seed1:'',team2:'E6 Winner',seed2:''},
+  {id:'ER4',region:'East',round:'Round of 32',roundNum:1,team1:'E7 Winner',seed1:'',team2:'E8 Winner',seed2:''},
+  {id:'ES1',region:'East',round:'Sweet 16',roundNum:2,team1:'ER1 Winner',seed1:'',team2:'ER2 Winner',seed2:''},
+  {id:'ES2',region:'East',round:'Sweet 16',roundNum:2,team1:'ER3 Winner',seed1:'',team2:'ER4 Winner',seed2:''},
+  {id:'EE1',region:'East',round:'Elite 8',roundNum:3,team1:'ES1 Winner',seed1:'',team2:'ES2 Winner',seed2:''},
+  // SOUTH R64
+  {id:'S1',region:'South',round:'Round of 64',roundNum:0,team1:'Florida',seed1:1,team2:'PV / Lehigh',seed2:16},
+  {id:'S2',region:'South',round:'Round of 64',roundNum:0,team1:'Clemson',seed1:8,team2:'Iowa',seed2:9},
+  {id:'S3',region:'South',round:'Round of 64',roundNum:0,team1:'Vanderbilt',seed1:5,team2:'McNeese',seed2:12},
+  {id:'S4',region:'South',round:'Round of 64',roundNum:0,team1:'Nebraska',seed1:4,team2:'Troy',seed2:13},
+  {id:'S5',region:'South',round:'Round of 64',roundNum:0,team1:'N. Carolina',seed1:6,team2:'VCU',seed2:11},
+  {id:'S6',region:'South',round:'Round of 64',roundNum:0,team1:'Illinois',seed1:3,team2:'Penn',seed2:14},
+  {id:'S7',region:'South',round:'Round of 64',roundNum:0,team1:"Saint Mary's",seed1:7,team2:'Texas A&M',seed2:10},
+  {id:'S8',region:'South',round:'Round of 64',roundNum:0,team1:'Houston',seed1:2,team2:'Idaho',seed2:15},
+  {id:'SR1',region:'South',round:'Round of 32',roundNum:1,team1:'S1 Winner',seed1:'',team2:'S2 Winner',seed2:''},
+  {id:'SR2',region:'South',round:'Round of 32',roundNum:1,team1:'S3 Winner',seed1:'',team2:'S4 Winner',seed2:''},
+  {id:'SR3',region:'South',round:'Round of 32',roundNum:1,team1:'S5 Winner',seed1:'',team2:'S6 Winner',seed2:''},
+  {id:'SR4',region:'South',round:'Round of 32',roundNum:1,team1:'S7 Winner',seed1:'',team2:'S8 Winner',seed2:''},
+  {id:'SS1',region:'South',round:'Sweet 16',roundNum:2,team1:'SR1 Winner',seed1:'',team2:'SR2 Winner',seed2:''},
+  {id:'SS2',region:'South',round:'Sweet 16',roundNum:2,team1:'SR3 Winner',seed1:'',team2:'SR4 Winner',seed2:''},
+  {id:'SE1',region:'South',round:'Elite 8',roundNum:3,team1:'SS1 Winner',seed1:'',team2:'SS2 Winner',seed2:''},
+  // WEST R64
+  {id:'W1',region:'West',round:'Round of 64',roundNum:0,team1:'Arizona',seed1:1,team2:'LIU',seed2:16},
+  {id:'W2',region:'West',round:'Round of 64',roundNum:0,team1:'Villanova',seed1:8,team2:'Utah State',seed2:9},
+  {id:'W3',region:'West',round:'Round of 64',roundNum:0,team1:'Wisconsin',seed1:5,team2:'High Point',seed2:12},
+  {id:'W4',region:'West',round:'Round of 64',roundNum:0,team1:'Arkansas',seed1:4,team2:'Hawaii',seed2:13},
+  {id:'W5',region:'West',round:'Round of 64',roundNum:0,team1:'BYU',seed1:6,team2:'Tex / NC St.',seed2:11},
+  {id:'W6',region:'West',round:'Round of 64',roundNum:0,team1:'Gonzaga',seed1:3,team2:'Kennesaw St.',seed2:14},
+  {id:'W7',region:'West',round:'Round of 64',roundNum:0,team1:'Miami',seed1:7,team2:'Missouri',seed2:10},
+  {id:'W8',region:'West',round:'Round of 64',roundNum:0,team1:'Purdue',seed1:2,team2:'Queens',seed2:15},
+  {id:'WR1',region:'West',round:'Round of 32',roundNum:1,team1:'W1 Winner',seed1:'',team2:'W2 Winner',seed2:''},
+  {id:'WR2',region:'West',round:'Round of 32',roundNum:1,team1:'W3 Winner',seed1:'',team2:'W4 Winner',seed2:''},
+  {id:'WR3',region:'West',round:'Round of 32',roundNum:1,team1:'W5 Winner',seed1:'',team2:'W6 Winner',seed2:''},
+  {id:'WR4',region:'West',round:'Round of 32',roundNum:1,team1:'W7 Winner',seed1:'',team2:'W8 Winner',seed2:''},
+  {id:'WS1',region:'West',round:'Sweet 16',roundNum:2,team1:'WR1 Winner',seed1:'',team2:'WR2 Winner',seed2:''},
+  {id:'WS2',region:'West',round:'Sweet 16',roundNum:2,team1:'WR3 Winner',seed1:'',team2:'WR4 Winner',seed2:''},
+  {id:'WE1',region:'West',round:'Elite 8',roundNum:3,team1:'WS1 Winner',seed1:'',team2:'WS2 Winner',seed2:''},
+  // MIDWEST R64
+  {id:'M1',region:'Midwest',round:'Round of 64',roundNum:0,team1:'Michigan',seed1:1,team2:'UMBC / Howard',seed2:16},
+  {id:'M2',region:'Midwest',round:'Round of 64',roundNum:0,team1:'Georgia',seed1:8,team2:'Saint Louis',seed2:9},
+  {id:'M3',region:'Midwest',round:'Round of 64',roundNum:0,team1:'Texas Tech',seed1:5,team2:'Akron',seed2:12},
+  {id:'M4',region:'Midwest',round:'Round of 64',roundNum:0,team1:'Alabama',seed1:4,team2:'Hofstra',seed2:13},
+  {id:'M5',region:'Midwest',round:'Round of 64',roundNum:0,team1:'Tennessee',seed1:6,team2:'MIA OH / SMU',seed2:11},
+  {id:'M6',region:'Midwest',round:'Round of 64',roundNum:0,team1:'Virginia',seed1:3,team2:'Wright State',seed2:14},
+  {id:'M7',region:'Midwest',round:'Round of 64',roundNum:0,team1:'Kentucky',seed1:7,team2:'Santa Clara',seed2:10},
+  {id:'M8',region:'Midwest',round:'Round of 64',roundNum:0,team1:'Iowa State',seed1:2,team2:'Tennessee St.',seed2:15},
+  {id:'MR1',region:'Midwest',round:'Round of 32',roundNum:1,team1:'M1 Winner',seed1:'',team2:'M2 Winner',seed2:''},
+  {id:'MR2',region:'Midwest',round:'Round of 32',roundNum:1,team1:'M3 Winner',seed1:'',team2:'M4 Winner',seed2:''},
+  {id:'MR3',region:'Midwest',round:'Round of 32',roundNum:1,team1:'M5 Winner',seed1:'',team2:'M6 Winner',seed2:''},
+  {id:'MR4',region:'Midwest',round:'Round of 32',roundNum:1,team1:'M7 Winner',seed1:'',team2:'M8 Winner',seed2:''},
+  {id:'MS1',region:'Midwest',round:'Sweet 16',roundNum:2,team1:'MR1 Winner',seed1:'',team2:'MR2 Winner',seed2:''},
+  {id:'MS2',region:'Midwest',round:'Sweet 16',roundNum:2,team1:'MR3 Winner',seed1:'',team2:'MR4 Winner',seed2:''},
+  {id:'ME1',region:'Midwest',round:'Elite 8',roundNum:3,team1:'MS1 Winner',seed1:'',team2:'MS2 Winner',seed2:''},
+  // FINAL FOUR + CHAMP
+  {id:'FF1',region:'Final Four',round:'Final Four',roundNum:4,team1:'East Champion',seed1:'',team2:'West Champion',seed2:''},
+  {id:'FF2',region:'Final Four',round:'Final Four',roundNum:4,team1:'South Champion',seed1:'',team2:'Midwest Champion',seed2:''},
+  {id:'CH1',region:'Championship',round:'Championship',roundNum:5,team1:'FF1 Winner',seed1:'',team2:'FF2 Winner',seed2:''},
+];
+
+let results={}, brackets=[], curTab='results';
+
+function login(){
+  if(document.getElementById('pwd').value===ADMIN_PWD){
+    loadAll();
+  }else{
+    document.getElementById('login-err').textContent='Incorrect password.';
+  }
+}
+
+async function loadAll(){
+  try{
+    const [rRows,bRows]=await Promise.all([
+      sbFetch('/rest/v1/results?select=*'),
+      sbFetch('/rest/v1/brackets?select=id,player_name,champion,submitted,created_at&order=created_at.asc')
+    ]);
+    results={};
+    (rRows||[]).forEach(r=>{results[r.game_id]=r.winning_team;});
+    brackets=bRows||[];
+    // Populate later round labels from actual results
+    populateLaterRounds();
+    buildUI();
+  }catch(e){
+    alert('Load failed: '+e.message);
+  }
+}
+
+// Fill in actual team names for R32+ games based on entered results
+function populateLaterRounds(){
+  ALL_GAMES.forEach(g=>{
+    if(g.roundNum===0)return; // R64 already has real names
+    // Replace "XX Winner" labels with actual winner if known
+    const t1ref=g.team1.replace(' Winner','');
+    const t2ref=g.team2.replace(' Winner','');
+    if(results[t1ref]) g.team1=results[t1ref];
+    if(results[t2ref]) g.team2=results[t2ref];
+  });
+}
+
+function buildUI(){
+  const regions=['East','South','West','Midwest','Final Four','Championship'];
+  let resultsHtml=`
+    <div class="hint">Click a team name to set them as the winner. Change any result by clicking the other team. Results save instantly.</div>`;
+
+  regions.forEach(region=>{
+    const games=ALL_GAMES.filter(g=>g.region===region);
+    resultsHtml+=`<div class="region-label">${region}</div>`;
+    games.forEach(g=>{
+      const winner=results[g.id]||'';
+      const isSet=!!winner;
+      const t1checked=winner===g.team1?'checked':'';
+      const t2checked=winner===g.team2?'checked':'';
+      resultsHtml+=`<div class="game-row ${isSet?'is-set':''}" id="row-${g.id}">
+        <div class="game-meta">
+          <div class="game-id">${g.id}</div>
+          <div class="game-desc">${g.round}</div>
+          ${isSet?`<span class="winner-tag">&#10003; ${winner}</span>
+            <button class="clear-btn" onclick="clearResult('${g.id}')">&#10005; Clear</button>`
+          :''}
+        </div>
+        <div class="team-options">
+          <div class="team-opt">
+            <input type="radio" name="game-${g.id}" id="r-${g.id}-1" value="${g.team1}" ${t1checked} onchange="saveResult('${g.id}','${g.team1}')">
+            <label for="r-${g.id}-1">
+              ${g.seed1?`<span class="seed-sm">(${g.seed1})</span>`:''}<span>${g.team1}</span>
+            </label>
+          </div>
+          <div class="team-opt">
+            <input type="radio" name="game-${g.id}" id="r-${g.id}-2" value="${g.team2}" ${t2checked} onchange="saveResult('${g.id}','${g.team2}')">
+            <label for="r-${g.id}-2">
+              ${g.seed2?`<span class="seed-sm">(${g.seed2})</span>`:''}<span>${g.team2}</span>
+            </label>
+          </div>
+        </div>
+      </div>`;
+    });
+  });
+
+  // Entries tab
+  let entriesHtml=`
+    <div class="hint">All submitted and in-progress brackets. Delete removes the entry permanently from the leaderboard.</div>`;
+  if(brackets.length===0){
+    entriesHtml+='<div style="text-align:center;padding:30px;color:#aaa;font-size:13px">No entries yet.</div>';
+  }else{
+    brackets.forEach(b=>{
+      const dt=new Date(b.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+      entriesHtml+=`<div class="entry-row">
+        <div style="flex:1">
+          <div class="entry-name">${b.player_name}</div>
+          <div class="entry-champ">${b.champion?'&#9733; '+b.champion:'No champion yet'}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          <span class="${b.submitted?'entry-submitted':'entry-draft'}">${b.submitted?'Submitted':'Draft'}</span>
+          <span class="entry-meta">${dt}</span>
+        </div>
+        <button class="del-btn" onclick="deleteEntry('${b.id}','${b.player_name}')">Delete</button>
+      </div>`;
+    });
+  }
+
+  document.getElementById('root').innerHTML=`<div class="wrap">
+    <div class="top-nav">
+      <a href="index.html">&#8592; Bracket Picker</a>
+      <a href="leaderboard.html">Leaderboard &rarr;</a>
+    </div>
+    <div class="tabs">
+      <button class="tab ${curTab==='results'?'active':''}" onclick="switchTab('results')">Game Results</button>
+      <button class="tab ${curTab==='entries'?'active':''}" onclick="switchTab('entries')">Entries (${brackets.length})</button>
+    </div>
+    <div id="tab-results" style="display:${curTab==='results'?'block':'none'}">${resultsHtml}</div>
+    <div id="tab-entries" style="display:${curTab==='entries'?'block':'none'}">${entriesHtml}</div>
+  </div>`;
+}
+
+function switchTab(tab){
+  curTab=tab;
+  document.getElementById('tab-results').style.display=tab==='results'?'block':'none';
+  document.getElementById('tab-entries').style.display=tab==='entries'?'block':'none';
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+async function saveResult(gameId,winner){
+  const game=ALL_GAMES.find(g=>g.id===gameId);
+  try{
+    await sbFetch('/rest/v1/results','POST',
+      {game_id:gameId,winning_team:winner,round_num:game.roundNum,region:game.region},
+      {'Prefer':'resolution=merge-duplicates,return=representation'});
+    results[gameId]=winner;
+    populateLaterRounds();
+    buildUI();
+  }catch(e){alert('Save failed: '+e.message);}
+}
+
+async function clearResult(gameId){
+  if(!confirm('Clear result for '+gameId+'?'))return;
+  try{
+    await sbFetch(`/rest/v1/results?game_id=eq.${gameId}`,'DELETE');
+    delete results[gameId];
+    populateLaterRounds();
+    buildUI();
+  }catch(e){alert('Clear failed: '+e.message);}
+}
+
+async function deleteEntry(id,name){
+  if(!confirm('Permanently delete the bracket for "'+name+'"?\nThis cannot be undone.'))return;
+  try{
+    await sbFetch(`/rest/v1/brackets?id=eq.${id}`,'DELETE');
+    brackets=brackets.filter(b=>b.id!==id);
+    buildUI();
+  }catch(e){alert('Delete failed: '+e.message);}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Admin — Enter Results</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Source Sans 3',sans-serif;background:#fff;color:#000;padding-bottom:40px}
+.hdr{background:#000;color:#fff;padding:14px 20px;text-align:center}
+.hdr h1{font-family:'Oswald',sans-serif;font-size:20px;font-weight:700;letter-spacing:3px;text-transform:uppercase}
+.hdr p{font-size:11px;color:#aaa;margin-top:2px;letter-spacing:2px;text-transform:uppercase}
+.wrap{max-width:700px;margin:0 auto;padding:20px 16px}
+.login-box{max-width:360px;margin:60px auto;background:#f9f9f9;border:1px solid #ddd;border-radius:8px;padding:28px 24px;text-align:center}
+.login-box h2{font-family:'Oswald',sans-serif;font-size:18px;text-transform:uppercase;letter-spacing:2px;margin-bottom:16px}
+.login-box input{width:100%;font-size:14px;padding:10px 12px;border:1px solid #ccc;border-radius:4px;margin-bottom:10px;outline:none}
+.login-box input:focus{border-color:#000}
+.stitle{font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#000;border-bottom:1px solid #000;padding-bottom:5px;margin:20px 0 10px}
+.region-label{font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:3px;color:#888;text-transform:uppercase;margin:14px 0 6px}
+.game-row{display:flex;align-items:center;gap:8px;background:#f9f9f9;border:1px solid #ddd;border-radius:6px;padding:8px 10px;margin-bottom:6px}
+.game-id{font-family:'Oswald',sans-serif;font-size:10px;font-weight:700;color:#888;width:32px;flex-shrink:0}
+.game-label{flex:1;font-size:12px;color:#333;line-height:1.3}
+.game-winner{font-size:12px;font-family:'Oswald',sans-serif;font-weight:600;color:#000;text-transform:uppercase}
+.winner-input{flex:1;font-size:12px;padding:5px 8px;border:1px solid #ccc;border-radius:3px;outline:none;max-width:200px}
+.winner-input:focus{border-color:#000}
+.btn{font-family:'Oswald',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;border-radius:3px;padding:6px 12px;cursor:pointer;transition:all .12s;border:1px solid #000;background:transparent;color:#000}
+.btn:hover{background:#000;color:#fff}
+.btn-fill{background:#000;color:#fff}
+.btn-fill:hover{background:#333}
+.btn-clear{border-color:#c00;color:#c00}
+.btn-clear:hover{background:#c00;color:#fff}
+.status-ok{color:#080;font-size:11px;letter-spacing:1px;text-transform:uppercase}
+.status-err{color:#c00;font-size:11px}
+.tag-set{background:#000;color:#fff;font-family:'Oswald',sans-serif;font-size:9px;font-weight:700;letter-spacing:1px;padding:2px 6px;border-radius:2px;text-transform:uppercase}
+.top-nav{display:flex;gap:10px;margin-bottom:16px;align-items:center}
+.top-nav a{font-family:'Oswald',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#000;text-decoration:none;border-bottom:1px solid #000}
+.entries-count{font-size:12px;color:#666}
+</style>
+</head>
+<body>
+<div class="hdr"><h1>2026 NCAA Bracket</h1><p>Admin &mdash; Enter Results</p></div>
+<div id="root"><div class="login-box"><h2>Admin Login</h2>
+  <input type="password" id="pwd" placeholder="Password..." onkeydown="if(event.key==='Enter')login()">
+  <button class="btn btn-fill" style="width:100%;margin-top:4px" onclick="login()">Enter</button>
+  <div id="login-err" style="color:#c00;font-size:12px;margin-top:8px"></div>
+</div></div>
+<script>
+
+const SUPA_URL='https://bfqvcnchmpyztovcgkbd.supabase.co',SUPA_KEY='sb_publishable_ucCXKlrFtpA5c-WoNUDpsQ_WwEzJg4W';
+async function sbFetch(path,method='GET',body=null,extra={}){
+  const opts={method,headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':method==='POST'?'return=representation':'',...extra}};
+  if(body)opts.body=JSON.stringify(body);
+  const r=await fetch(SUPA_URL+path,opts);
+  if(!r.ok){const e=await r.text();throw new Error(r.status+': '+e);}
+  const t=await r.text();return t?JSON.parse(t):null;
+}
+const db={
+  async getResults(){return sbFetch('/rest/v1/results?select=*');},
+  async upsertResult(d){return sbFetch('/rest/v1/results','POST',d,{'Prefer':'resolution=merge-duplicates,return=representation'});},
+  async deleteResult(id){return sbFetch(`/rest/v1/results?game_id=eq.${id}`,'DELETE');}
+};
+
+
+// All 63 games with stable IDs and descriptions
+// R64 matchups use seed numbers; later rounds filled dynamically
+const ALL_GAMES = [
+  // EAST R64
+  {id:'E1', region:'East', round:'Round of 64', roundNum:0, label:'(1) Duke vs (16) Siena'},
+  {id:'E2', region:'East', round:'Round of 64', roundNum:0, label:'(8) Ohio State vs (9) TCU'},
+  {id:'E3', region:'East', round:'Round of 64', roundNum:0, label:"(5) St. John's vs (12) N. Iowa"},
+  {id:'E4', region:'East', round:'Round of 64', roundNum:0, label:'(4) Kansas vs (13) Cal Baptist'},
+  {id:'E5', region:'East', round:'Round of 64', roundNum:0, label:'(6) Louisville vs (11) South Florida'},
+  {id:'E6', region:'East', round:'Round of 64', roundNum:0, label:'(3) Michigan State vs (14) N. Dakota St.'},
+  {id:'E7', region:'East', round:'Round of 64', roundNum:0, label:'(7) UCLA vs (10) UCF'},
+  {id:'E8', region:'East', round:'Round of 64', roundNum:0, label:'(2) UConn vs (15) Furman'},
+  // EAST later
+  {id:'ER1', region:'East', round:'Round of 32', roundNum:1, label:'Winner E1 vs Winner E2'},
+  {id:'ER2', region:'East', round:'Round of 32', roundNum:1, label:'Winner E3 vs Winner E4'},
+  {id:'ER3', region:'East', round:'Round of 32', roundNum:1, label:'Winner E5 vs Winner E6'},
+  {id:'ER4', region:'East', round:'Round of 32', roundNum:1, label:'Winner E7 vs Winner E8'},
+  {id:'ES1', region:'East', round:'Sweet 16', roundNum:2, label:'Winner ER1 vs Winner ER2'},
+  {id:'ES2', region:'East', round:'Sweet 16', roundNum:2, label:'Winner ER3 vs Winner ER4'},
+  {id:'EE1', region:'East', round:'Elite 8', roundNum:3, label:'Winner ES1 vs Winner ES2'},
+  // SOUTH R64
+  {id:'S1', region:'South', round:'Round of 64', roundNum:0, label:'(1) Florida vs (16) Prairie View/Lehigh'},
+  {id:'S2', region:'South', round:'Round of 64', roundNum:0, label:'(8) Clemson vs (9) Iowa'},
+  {id:'S3', region:'South', round:'Round of 64', roundNum:0, label:'(5) Vanderbilt vs (12) McNeese'},
+  {id:'S4', region:'South', round:'Round of 64', roundNum:0, label:'(4) Nebraska vs (13) Troy'},
+  {id:'S5', region:'South', round:'Round of 64', roundNum:0, label:'(6) N. Carolina vs (11) VCU'},
+  {id:'S6', region:'South', round:'Round of 64', roundNum:0, label:'(3) Illinois vs (14) Penn'},
+  {id:'S7', region:'South', round:'Round of 64', roundNum:0, label:"(7) Saint Mary's vs (10) Texas A&M"},
+  {id:'S8', region:'South', round:'Round of 64', roundNum:0, label:'(2) Houston vs (15) Idaho'},
+  {id:'SR1', region:'South', round:'Round of 32', roundNum:1, label:'Winner S1 vs Winner S2'},
+  {id:'SR2', region:'South', round:'Round of 32', roundNum:1, label:'Winner S3 vs Winner S4'},
+  {id:'SR3', region:'South', round:'Round of 32', roundNum:1, label:'Winner S5 vs Winner S6'},
+  {id:'SR4', region:'South', round:'Round of 32', roundNum:1, label:'Winner S7 vs Winner S8'},
+  {id:'SS1', region:'South', round:'Sweet 16', roundNum:2, label:'Winner SR1 vs Winner SR2'},
+  {id:'SS2', region:'South', round:'Sweet 16', roundNum:2, label:'Winner SR3 vs Winner SR4'},
+  {id:'SE1', region:'South', round:'Elite 8', roundNum:3, label:'Winner SS1 vs Winner SS2'},
+  // WEST R64
+  {id:'W1', region:'West', round:'Round of 64', roundNum:0, label:'(1) Arizona vs (16) LIU'},
+  {id:'W2', region:'West', round:'Round of 64', roundNum:0, label:'(8) Villanova vs (9) Utah State'},
+  {id:'W3', region:'West', round:'Round of 64', roundNum:0, label:'(5) Wisconsin vs (12) High Point'},
+  {id:'W4', region:'West', round:'Round of 64', roundNum:0, label:'(4) Arkansas vs (13) Hawaii'},
+  {id:'W5', region:'West', round:'Round of 64', roundNum:0, label:'(6) BYU vs (11) Texas/NC State'},
+  {id:'W6', region:'West', round:'Round of 64', roundNum:0, label:'(3) Gonzaga vs (14) Kennesaw St.'},
+  {id:'W7', region:'West', round:'Round of 64', roundNum:0, label:'(7) Miami vs (10) Missouri'},
+  {id:'W8', region:'West', round:'Round of 64', roundNum:0, label:'(2) Purdue vs (15) Queens'},
+  {id:'WR1', region:'West', round:'Round of 32', roundNum:1, label:'Winner W1 vs Winner W2'},
+  {id:'WR2', region:'West', round:'Round of 32', roundNum:1, label:'Winner W3 vs Winner W4'},
+  {id:'WR3', region:'West', round:'Round of 32', roundNum:1, label:'Winner W5 vs Winner W6'},
+  {id:'WR4', region:'West', round:'Round of 32', roundNum:1, label:'Winner W7 vs Winner W8'},
+  {id:'WS1', region:'West', round:'Sweet 16', roundNum:2, label:'Winner WR1 vs Winner WR2'},
+  {id:'WS2', region:'West', round:'Sweet 16', roundNum:2, label:'Winner WR3 vs Winner WR4'},
+  {id:'WE1', region:'West', round:'Elite 8', roundNum:3, label:'Winner WS1 vs Winner WS2'},
+  // MIDWEST R64
+  {id:'M1', region:'Midwest', round:'Round of 64', roundNum:0, label:'(1) Michigan vs (16) UMBC/Howard'},
+  {id:'M2', region:'Midwest', round:'Round of 64', roundNum:0, label:'(8) Georgia vs (9) Saint Louis'},
+  {id:'M3', region:'Midwest', round:'Round of 64', roundNum:0, label:'(5) Texas Tech vs (12) Akron'},
+  {id:'M4', region:'Midwest', round:'Round of 64', roundNum:0, label:'(4) Alabama vs (13) Hofstra'},
+  {id:'M5', region:'Midwest', round:'Round of 64', roundNum:0, label:'(6) Tennessee vs (11) Miami OH/SMU'},
+  {id:'M6', region:'Midwest', round:'Round of 64', roundNum:0, label:'(3) Virginia vs (14) Wright State'},
+  {id:'M7', region:'Midwest', round:'Round of 64', roundNum:0, label:'(7) Kentucky vs (10) Santa Clara'},
+  {id:'M8', region:'Midwest', round:'Round of 64', roundNum:0, label:'(2) Iowa State vs (15) Tennessee St.'},
+  {id:'MR1', region:'Midwest', round:'Round of 32', roundNum:1, label:'Winner M1 vs Winner M2'},
+  {id:'MR2', region:'Midwest', round:'Round of 32', roundNum:1, label:'Winner M3 vs Winner M4'},
+  {id:'MR3', region:'Midwest', round:'Round of 32', roundNum:1, label:'Winner M5 vs Winner M6'},
+  {id:'MR4', region:'Midwest', round:'Round of 32', roundNum:1, label:'Winner M7 vs Winner M8'},
+  {id:'MS1', region:'Midwest', round:'Sweet 16', roundNum:2, label:'Winner MR1 vs Winner MR2'},
+  {id:'MS2', region:'Midwest', round:'Sweet 16', roundNum:2, label:'Winner MR3 vs Winner MR4'},
+  {id:'ME1', region:'Midwest', round:'Elite 8', roundNum:3, label:'Winner MS1 vs Winner MS2'},
+  // FINAL FOUR + CHAMP
+  {id:'FF1', region:'Final Four', round:'Final Four', roundNum:4, label:'East Champion vs West Champion'},
+  {id:'FF2', region:'Final Four', round:'Final Four', roundNum:4, label:'South Champion vs Midwest Champion'},
+  {id:'CH1', region:'Championship', round:'Championship', roundNum:5, label:'FF1 Winner vs FF2 Winner'},
+];
+const POINTS_BY_ROUND=[1,2,4,8,16,32];
+
+
+const ADMIN_PWD = 'bracket2026';  // Change this to your preferred password
+let results = {};  // game_id -> winning_team
+
+function login() {
+  const pwd = document.getElementById('pwd').value;
+  if (pwd === ADMIN_PWD) {
+    renderAdmin();
+  } else {
+    document.getElementById('login-err').textContent = 'Incorrect password.';
+  }
+}
+
+async function renderAdmin() {
+  document.getElementById('root').innerHTML = '<div class="wrap"><div class="stitle">Loading results...</div></div>';
+  try {
+    const rows = await db.getResults();
+    results = {};
+    (rows||[]).forEach(r => { results[r.game_id] = r.winning_team; });
+  } catch(e) {
+    console.warn('Could not load results:', e.message);
+  }
+  buildUI();
+}
+
+function buildUI() {
+  const regions = ['East','South','West','Midwest','Final Four','Championship'];
+  let html = `<div class="wrap">
+    <div class="top-nav">
+      <a href="index.html">&#8592; Bracket Picker</a>
+      <a href="leaderboard.html">Leaderboard &rarr;</a>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <div class="stitle" style="margin:0">Enter Game Results</div>
+      <div id="save-all-status" class="status-ok"></div>
+    </div>
+    <div style="font-size:12px;color:#888;margin-bottom:16px">Type the winning team name and click Set. Results are saved instantly to the database.</div>`;
+
+  regions.forEach(region => {
+    const games = ALL_GAMES.filter(g => g.region === region);
+    html += `<div class="region-label">${region}</div>`;
+    games.forEach(g => {
+      const winner = results[g.id] || '';
+      html += `<div class="game-row" id="row-${g.id}">
+        <div class="game-id">${g.id}</div>
+        <div class="game-label">${g.label}</div>
+        ${winner
+          ? `<div class="game-winner">${winner} <span class="tag-set">set</span></div>
+             <button class="btn btn-clear" style="padding:4px 8px;font-size:10px" onclick="clearResult('${g.id}')">&#10005;</button>`
+          : `<input class="winner-input" id="inp-${g.id}" placeholder="Winner..." onkeydown="if(event.key==='Enter')saveResult('${g.id}')">
+             <button class="btn btn-fill" style="padding:5px 10px;font-size:10px" onclick="saveResult('${g.id}')">Set</button>`
+        }
+      </div>`;
+    });
+  });
+  html += '</div>';
+  document.getElementById('root').innerHTML = html;
+}
+
+async function saveResult(gameId) {
+  const inp = document.getElementById('inp-' + gameId);
+  if (!inp) return;
+  const winner = inp.value.trim();
+  if (!winner) return;
+  const game = ALL_GAMES.find(g => g.id === gameId);
+  try {
+    await db.upsertResult({ game_id: gameId, winning_team: winner, round_num: game.roundNum, region: game.region });
+    results[gameId] = winner;
+    buildUI();
+  } catch(e) {
+    alert('Save failed: ' + e.message);
+  }
+}
+
+async function clearResult(gameId) {
+  if (!confirm('Clear the result for ' + gameId + '?')) return;
+  try {
+    await db.deleteResult(gameId);
+    delete results[gameId];
+    buildUI();
+  } catch(e) {
+    alert('Clear failed: ' + e.message);
+  }
+}
+</script>
+</body></html>

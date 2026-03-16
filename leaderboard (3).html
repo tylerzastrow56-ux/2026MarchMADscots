@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Leaderboard — 2026 NCAA Mascot Bracket</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Source Sans 3',sans-serif;background:#fff;color:#000;padding-bottom:60px}
+.hdr{background:#fff;border-bottom:2px solid #000;padding:14px 20px 10px;text-align:center}
+.hdr h1{font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;color:#000;letter-spacing:3px;text-transform:uppercase}
+.hdr p{font-size:11px;color:#555;margin-top:2px;letter-spacing:2px;text-transform:uppercase}
+.wrap{max-width:760px;margin:0 auto;padding:16px 14px 40px}
+.top-nav{display:flex;gap:16px;margin-bottom:16px;align-items:center;flex-wrap:wrap}
+.top-nav a{font-family:'Oswald',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#000;text-decoration:none;border-bottom:1px solid #000}
+.refresh-btn{font-family:'Oswald',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;background:transparent;border:1px solid #000;color:#000;border-radius:3px;padding:5px 12px;cursor:pointer;margin-left:auto}
+.refresh-btn:hover{background:#000;color:#fff}
+/* Stats bar */
+.stats-bar{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+.stat-box{background:#f9f9f9;border:1px solid #ddd;border-radius:6px;padding:10px 14px;flex:1;min-width:100px;text-align:center}
+.stat-num{font-family:'Oswald',sans-serif;font-size:24px;font-weight:700;color:#000}
+.stat-lbl{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+/* Leaderboard table */
+.lb-table{width:100%;border-collapse:collapse}
+.lb-table th{font-family:'Oswald',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#888;padding:6px 10px;text-align:left;border-bottom:2px solid #000;white-space:nowrap}
+.lb-table th.right{text-align:right}
+.lb-table td{padding:8px 10px;border-bottom:1px solid #eee;vertical-align:middle}
+.lb-table tr:hover td{background:#fafafa}
+.rank{font-family:'Oswald',sans-serif;font-size:16px;font-weight:700;color:#000;width:36px}
+.rank-1{font-size:20px}
+.name{font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;text-transform:uppercase}
+.champ-pick{font-size:11px;color:#666}
+.score-total{font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;color:#000;text-align:right}
+.score-max{font-size:10px;color:#aaa;text-align:right}
+/* Round breakdown */
+.round-breakdown{display:flex;gap:4px;flex-wrap:wrap}
+.rb-pill{font-family:'Oswald',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.5px;padding:2px 6px;border-radius:2px;border:1px solid #ddd;color:#888;white-space:nowrap}
+.rb-pill.has-pts{border-color:#000;color:#000;background:#f0f0f0}
+/* Expand row */
+.expand-row td{padding:0}
+.expand-inner{padding:10px 14px 14px;background:#fafafa;border-bottom:1px solid #eee}
+.expand-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px;margin-top:8px}
+.expand-game{font-size:11px;display:flex;gap:6px;align-items:center}
+.expand-game .gid{font-family:'Oswald',sans-serif;font-size:9px;color:#aaa;width:28px;flex-shrink:0}
+.expand-game .pick{flex:1;color:#333}
+.expand-game .pick.correct{color:#080;font-weight:600}
+.expand-game .pick.wrong{color:#c00;text-decoration:line-through}
+.expand-game .pick.pending{color:#888}
+.expand-game .pts{font-family:'Oswald',sans-serif;font-size:9px;font-weight:700;color:#000;width:20px;text-align:right}
+/* Progress bar per entry */
+.prog-wrap{background:#eee;border-radius:2px;height:4px;margin-top:4px;width:100%}
+.prog-fill{background:#000;height:4px;border-radius:2px;transition:width .5s}
+/* Possible pts remaining */
+.possible{font-size:10px;color:#888}
+.medal{font-size:18px;margin-right:2px}
+.loading{text-align:center;padding:60px 20px;font-family:'Oswald',sans-serif;font-size:14px;letter-spacing:2px;color:#888;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <h1>2026 NCAA Mascot Bracket</h1>
+  <p id="last-update">Leaderboard</p>
+</div>
+<div class="wrap">
+  <div class="top-nav">
+    <a href="index.html">&#8592; Enter Bracket</a>
+    <button class="refresh-btn" onclick="loadAll()">&#8635; Refresh</button>
+  </div>
+  <div id="content"><div class="loading">Loading&hellip;</div></div>
+</div>
+
+<script>
+const SUPA_URL='https://bfqvcnchmpyztovcgkbd.supabase.co',SUPA_KEY='sb_publishable_ucCXKlrFtpA5c-WoNUDpsQ_WwEzJg4W';
+async function sbFetch(path){
+  const r=await fetch(SUPA_URL+path,{headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}});
+  if(!r.ok)throw new Error(r.status);
+  return r.json();
+}
+
+const POINTS=[1,2,4,8,16,32];
+// All game IDs in round order
+const ROUND_GAME_IDS=[
+  ['E1','E2','E3','E4','E5','E6','E7','E8','S1','S2','S3','S4','S5','S6','S7','S8','W1','W2','W3','W4','W5','W6','W7','W8','M1','M2','M3','M4','M5','M6','M7','M8'],
+  ['ER1','ER2','ER3','ER4','SR1','SR2','SR3','SR4','WR1','WR2','WR3','WR4','MR1','MR2','MR3','MR4'],
+  ['ES1','ES2','SS1','SS2','WS1','WS2','MS1','MS2'],
+  ['EE1','SE1','WE1','ME1'],
+  ['FF1','FF2'],
+  ['CH1']
+];
+const ROUND_NAMES=['R64','R32','Sweet 16','Elite 8','Final Four','Champ'];
+const MAX_SCORE=32+64+128+128+160+192; // wait no: 32×1+16×2+8×4+4×8+2×16+1×32 = 32+32+32+32+32+32=192
+
+let brackets=[], results={}, expandedIdx=null;
+
+async function loadAll(){
+  document.getElementById('last-update').textContent='Loading...';
+  console.log('loadAll called, fetching from:', SUPA_URL);
+  try{
+    const [bRows, resRows] = await Promise.all([
+      sbFetch('/rest/v1/brackets?select=*&order=created_at.asc'),
+      sbFetch('/rest/v1/results?select=*')
+    ]);
+    brackets=bRows||[];
+    results={};
+    (resRows||[]).forEach(r=>{results[r.game_id]=r.winning_team;});
+    console.log('Loaded', brackets.length, 'brackets,', Object.keys(results).length, 'results');
+    document.getElementById('last-update').textContent='Updated '+new Date().toLocaleTimeString()+' ('+brackets.length+' entries)';
+    render();
+  }catch(e){
+    console.error('Load error:', e);
+    document.getElementById('content').innerHTML=`<div class="loading" style="color:#c00;font-size:13px;line-height:1.8">
+      <strong>Could not load data</strong><br>
+      ${e.message}<br><br>
+      <span style="font-size:11px;color:#888">If this works when opened directly but not from a link,<br>
+      go to Supabase &rarr; Project Settings &rarr; API &rarr; Allowed Origins<br>
+      and add your GitHub Pages URL.</span>
+    </div>`;
+  }
+}
+
+function scoreEntry(picks){
+  let total=0, byRound=Array(6).fill(0), correct=0, gamesScored=0;
+  ROUND_GAME_IDS.forEach((ids,ri)=>{
+    ids.forEach(gid=>{
+      const pick=picks[gid], actual=results[gid];
+      if(actual){
+        gamesScored++;
+        if(pick===actual){total+=POINTS[ri];byRound[ri]+=POINTS[ri];correct++;}
+      }
+    });
+  });
+  return {total,byRound,correct,gamesScored};
+}
+
+function maxPossible(picks){
+  // Points still achievable: any game not yet played where pick is still alive
+  // Simplified: sum points for all unpicked-or-correct games in unplayed rounds
+  let possible=0;
+  ROUND_GAME_IDS.forEach((ids,ri)=>{
+    ids.forEach(gid=>{
+      const pick=picks[gid], actual=results[gid];
+      if(!actual && pick) possible+=POINTS[ri]; // game not played yet, has a pick
+    });
+  });
+  return possible;
+}
+
+function render(){
+  // Show all brackets that have at least a champion pick
+  const submitted=brackets.filter(b=>b.submitted===true||b.submitted==='true'||b.champion);
+  const gamesPlayed=Object.keys(results).length;
+  const totalGames=63;
+
+  // Score and sort
+  const scored=submitted.map(b=>{
+    const s=scoreEntry(b.picks||{});
+    const mp=maxPossible(b.picks||{});
+    return{...b,...s,maxPossible:mp};
+  }).sort((a,b)=>b.total-a.total||(b.maxPossible-a.maxPossible));
+
+  let html=`<div class="stats-bar">
+    <div class="stat-box"><div class="stat-num">${brackets.length}</div><div class="stat-lbl">Entries</div></div>
+    <div class="stat-box"><div class="stat-num">${gamesPlayed}</div><div class="stat-lbl">Games Played</div></div>
+    <div class="stat-box"><div class="stat-num">${totalGames-gamesPlayed}</div><div class="stat-lbl">Remaining</div></div>
+    <div class="stat-box"><div class="stat-num">${scored[0]?scored[0].total:0}</div><div class="stat-lbl">Top Score</div></div>
+  </div>
+  `;
+
+  if(scored.length===0){
+    html+='<div class="loading">No submitted brackets yet.</div>';
+    document.getElementById('content').innerHTML=html;return;
+  }
+
+  html+=`<table class="lb-table"><thead><tr>
+    <th></th><th>Name</th><th>Champion Pick</th>
+    ${ROUND_NAMES.map(r=>`<th class="right">${r}</th>`).join('')}
+    <th class="right">Total</th><th class="right">Max Left</th>
+  </tr></thead><tbody>`;
+
+  scored.forEach((entry,i)=>{
+    const rank=i+1;
+    const medal=rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':'';
+    const pct=Math.round((entry.total/(entry.total+entry.maxPossible||1))*100);
+    const isExpanded=expandedIdx===i;
+    html+=`<tr style="cursor:pointer" onclick="toggleExpand(${i})">
+      <td class="rank rank-${rank}">${medal||rank}</td>
+      <td><div class="name">${entry.player_name}</div>
+          <div class="prog-wrap"><div class="prog-fill" style="width:${gamesPlayed?Math.round(entry.correct/entry.gamesScored*100):0}%"></div></div>
+      </td>
+      <td><div class="champ-pick">${entry.champion||'—'}</div></td>
+      ${entry.byRound.map((pts,ri)=>
+        `<td class="right"><span style="font-family:Oswald,sans-serif;font-weight:600;font-size:13px;color:${pts>0?'#000':'#ccc'}">${pts||'—'}</span></td>`
+      ).join('')}
+      <td class="score-total">${entry.total}</td>
+      <td><div class="score-max">+${entry.maxPossible}</div></td>
+    </tr>`;
+
+    if(isExpanded){
+      html+=`<tr class="expand-row"><td colspan="10"><div class="expand-inner">
+        <div style="font-family:Oswald,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#888;margin-bottom:8px">
+          ${entry.correct} correct of ${entry.gamesScored} played &mdash; ${entry.total} pts
+        </div>
+        <div class="expand-grid">`;
+      ROUND_GAME_IDS.forEach((ids,ri)=>{
+        ids.forEach(gid=>{
+          const pick=(entry.picks||{})[gid];
+          const actual=results[gid];
+          const cls=!actual?'pending':pick===actual?'correct':'wrong';
+          const pts=actual&&pick===actual?'+'+POINTS[ri]:'';
+          if(pick)html+=`<div class="expand-game">
+            <span class="gid">${gid}</span>
+            <span class="pick ${cls}">${pick}</span>
+            <span class="pts">${pts}</span>
+          </div>`;
+        });
+      });
+      html+=`</div></div></td></tr>`;
+    }
+  });
+
+  html+='</tbody></table>';
+  document.getElementById('content').innerHTML=html;
+}
+
+function toggleExpand(i){
+  expandedIdx=expandedIdx===i?null:i;
+  render();
+}
+
+loadAll();
+setInterval(loadAll, 30000); // auto-refresh every 60s
+</script>
+</body></html>

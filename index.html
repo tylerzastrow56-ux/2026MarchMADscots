@@ -356,7 +356,7 @@ function renderChampion(){
       <button class="abtn afill" onclick="showList(${curPlayerIdx})">Picks List</button>
       <button class="abtn afill" onclick="printBracket(${curPlayerIdx})">&#128438; Save PDF</button>
       <button class="abtn aout" onclick="viewAll()">All Picks</button>
-      <button class="abtn aout" onclick="goPlayers()">Players</button>
+      <button class="abtn aout" onclick="startNewBracket()">New Bracket &rarr;</button>
     </div>
   </div>
   <div class="nav"><button class="nbtn" onclick="prevStep()">&larr; Back</button><div class="ctr">Champion</div><button class="nbtn" disabled>Done</button></div>`;
@@ -377,7 +377,8 @@ function renderPlayers(){
         <button class="abtn aout" style="padding:12px" onclick="showBracket(0)">View Bracket Graphic</button>
       </div>
       <div style="border-top:1px solid #ddd;padding-top:16px">
-        <div style="font-size:11px;color:#888;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Start a new bracket</div>
+        <div style="font-size:11px;color:#888;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Start a new bracket for someone else</div>
+        <div style="font-size:11px;color:#aaa;margin-bottom:10px">The previous bracket is already saved &mdash; this will not affect it.</div>
         <div class="apr" style="max-width:340px;margin:0 auto">
           <input type="text" id="pi" placeholder="First name + last initial (e.g. John S)" maxlength="30" onkeydown="if(event.key===\'Enter\')addPlayer()">
           <button class="abtn afill" onclick="addPlayer()">Go &rarr;</button>
@@ -666,8 +667,10 @@ function nav(title,backFn,nextFn,nextLbl,prevDis=false){
 function addPlayer(){
   const inp=document.getElementById('pi');
   const nm=(inp.value||'').trim();if(!nm)return;
-  // Single-player mode: always replace/set slot 0
-  players[0]={name:nm,savedPhases:[],champion:null};
+  // Clear session so this is treated as a brand new bracket in Supabase
+  sessionStorage.removeItem('bracket_id');
+  // Create fresh player — does NOT touch any previously submitted bracket in DB
+  players[0]={name:nm,savedPhases:[],champion:null,submitted:false};
   inp.value='';
   startPlayer(0);
 }
@@ -823,6 +826,15 @@ function prevStep(){
 
 function nextPlayer(){curPlayerIdx++;screen='players';render();}
 function goPlayers(){screen='players';render();}
+function startNewBracket(){
+  // Clear session so next person gets a fresh DB entry
+  sessionStorage.removeItem('bracket_id');
+  players[0]={name:'',savedPhases:[],champion:null,submitted:false};
+  screen='players';
+  render();
+  // Focus the name input after render
+  setTimeout(()=>{const e=document.getElementById('pi');if(e)e.focus();},100);
+}
 function showBracket(i){curPlayerIdx=i;screen='bracket';render();}
 
 function viewAll(){

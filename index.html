@@ -354,6 +354,7 @@ function renderChampion(){
       ${curPlayerIdx<players.length-1?'<button class="abtn afill" onclick="nextPlayer()">Next Player &rarr;</button>':''}
       <button class="abtn afill" onclick="showBracket(${curPlayerIdx})">Bracket</button>
       <button class="abtn afill" onclick="showList(${curPlayerIdx})">Picks List</button>
+      <button class="abtn afill" onclick="printBracket(${curPlayerIdx})">&#128438; Save PDF</button>
       <button class="abtn aout" onclick="viewAll()">All Picks</button>
       <button class="abtn aout" onclick="goPlayers()">Players</button>
     </div>
@@ -407,6 +408,11 @@ function renderPlayers(){
         <div style="font-family:Oswald,sans-serif;font-size:20px;font-weight:700;width:28px;flex-shrink:0;color:#000">4</div>
         <div><div style="font-family:Oswald,sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px">Track your score</div>
         <div style="font-size:12px;color:#666;margin-top:2px">Points double each round: 1pt R64 &rarr; 2 &rarr; 4 &rarr; 8 &rarr; 16 &rarr; 32pts Championship. Check the <a href="leaderboard.html" style="color:#000;font-weight:600">leaderboard</a> as games are played!</div></div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <div style="font-family:Oswald,sans-serif;font-size:20px;font-weight:700;width:28px;flex-shrink:0;color:#000">5</div>
+        <div><div style="font-family:Oswald,sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px">Save your bracket as a PDF</div>
+        <div style="font-size:12px;color:#666;margin-top:2px">After completing your bracket, tap <strong>Save PDF</strong> to download a copy to your phone or computer for easy reference during the tournament.</div></div>
       </div>
     </div>
     <div style="border-top:1px solid #ddd;padding-top:18px">
@@ -1128,6 +1134,77 @@ function pickBySeed(g){
 function autoFillCurrentRound(){
   // Fill any null picks in current picks array
   picks=picks.map((p,i)=>p||pickBySeed(curGames[i]));
+}
+
+
+// ── Print / Save as PDF (bracket graphic) ────────────────────────────────────
+function printBracket(idx) {
+  curPlayerIdx = idx;
+  const pl = curPlayer();
+  if (!pl || !pl.savedPhases || !pl.savedPhases.length) {
+    alert('Complete your bracket first before saving a PDF.');
+    return;
+  }
+
+  const svgContent = buildBracketSVG(pl);
+  const playerName = pl.name || 'My Bracket';
+  const champion = pl.champion ? (pl.champion.team + ' ' + (pl.champion.nickname || '')) : '';
+  const dateStr = new Date().toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'});
+
+  const printHTML = [
+    '<!DOCTYPE html><html><head><meta charset="UTF-8">',
+    '<title>' + playerName + ' — 2026 NCAA Mascot Bracket</title>',
+    '<style>',
+    '@page{size:landscape;margin:0.25in 0.3in;}',
+    '*{box-sizing:border-box;margin:0;padding:0;}',
+    'body{font-family:Arial,sans-serif;background:#fff;color:#000;}',
+    '.no-print{background:#000;color:#fff;padding:10px 16px;font-size:12px;font-weight:bold;text-align:center;margin-bottom:10px;}',
+    '.no-print button{margin-left:14px;background:#fff;color:#000;border:none;font-weight:700;font-size:12px;padding:5px 14px;border-radius:3px;cursor:pointer;}',
+    '.ph{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:8px;}',
+    '.ph-title{font-size:15px;font-weight:700;letter-spacing:2px;text-transform:uppercase;}',
+    '.ph-name{font-size:12px;font-weight:700;text-transform:uppercase;color:#333;margin-left:12px;}',
+    '.ph-right{text-align:right;font-size:9px;color:#888;line-height:1.6;}',
+    '.champ-line{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;}',
+    '.bw{width:100%;overflow:hidden;}',
+    '.bw svg{width:100%;height:auto;display:block;}',
+    '.footer{margin-top:6px;border-top:1px solid #ddd;padding-top:4px;display:flex;justify-content:space-between;font-size:8px;color:#aaa;}',
+    '@media print{.no-print{display:none;}body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}',
+    '</style></head><body>',
+    '<div class="no-print">',
+    '&#128438; Choose <strong>Landscape</strong> orientation and <strong>Save as PDF</strong>.',
+    '<button onclick="window.print()">&#128438; Print / Save PDF</button>',
+    '</div>',
+    '<div class="ph">',
+    '<div style="display:flex;align-items:baseline">',
+    '<div class="ph-title">2026 NCAA Mascot Bracket</div>',
+    '<div class="ph-name">' + playerName + '</div>',
+    '</div>',
+    '<div class="ph-right">',
+    champion ? '<div class="champ-line">&#9733; Champion: ' + champion + '</div>' : '',
+    '<div>Printed ' + dateStr + '</div>',
+    '<div>Scoring: 1 → 2 → 4 → 8 → 16 → 32 pts per round</div>',
+    '</div></div>',
+    '<div class="bw">' + svgContent + '</div>',
+    '<div class="footer">',
+    '<span>2026 NCAA Mascot Bracket &mdash; ' + playerName + '</span>',
+    '<span>East &bull; South &bull; West &bull; Midwest &bull; Final Four &bull; Championship</span>',
+    '<span>Picks locked March 19, 2026</span>',
+    '</div>',
+    '</body></html>'
+  ].join('\n');
+
+  // Use Blob URL — works without pop-up permission and handles large content
+  const blob = new Blob([printHTML], {type: 'text/html'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.target = '_blank';
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  // Clean up blob URL after a delay
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
 
 render();

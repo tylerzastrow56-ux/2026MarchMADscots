@@ -1153,59 +1153,66 @@ function printBracket(idx) {
 
   const printHTML = [
     '<!DOCTYPE html><html><head><meta charset="UTF-8">',
-    '<title>' + playerName + ' — 2026 NCAA Mascot Bracket</title>',
     '<style>',
     '@page{size:landscape;margin:0.25in 0.3in;}',
     '*{box-sizing:border-box;margin:0;padding:0;}',
     'body{font-family:Arial,sans-serif;background:#fff;color:#000;}',
-    '.no-print{background:#000;color:#fff;padding:10px 16px;font-size:12px;font-weight:bold;text-align:center;margin-bottom:10px;}',
-    '.no-print button{margin-left:14px;background:#fff;color:#000;border:none;font-weight:700;font-size:12px;padding:5px 14px;border-radius:3px;cursor:pointer;}',
     '.ph{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:8px;}',
     '.ph-title{font-size:15px;font-weight:700;letter-spacing:2px;text-transform:uppercase;}',
     '.ph-name{font-size:12px;font-weight:700;text-transform:uppercase;color:#333;margin-left:12px;}',
     '.ph-right{text-align:right;font-size:9px;color:#888;line-height:1.6;}',
-    '.champ-line{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;}',
     '.bw{width:100%;overflow:hidden;}',
     '.bw svg{width:100%;height:auto;display:block;}',
     '.footer{margin-top:6px;border-top:1px solid #ddd;padding-top:4px;display:flex;justify-content:space-between;font-size:8px;color:#aaa;}',
-    '@media print{.no-print{display:none;}body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}',
+    'body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}',
     '</style></head><body>',
-    '<div class="no-print">',
-    '&#128438; Choose <strong>Landscape</strong> orientation and <strong>Save as PDF</strong>.',
-    '<button onclick="window.print()">&#128438; Print / Save PDF</button>',
-    '</div>',
     '<div class="ph">',
     '<div style="display:flex;align-items:baseline">',
     '<div class="ph-title">2026 NCAA Mascot Bracket</div>',
     '<div class="ph-name">' + playerName + '</div>',
     '</div>',
     '<div class="ph-right">',
-    champion ? '<div class="champ-line">&#9733; Champion: ' + champion + '</div>' : '',
+    champion ? '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px">&#9733; Champion: ' + champion + '</div>' : '',
     '<div>Printed ' + dateStr + '</div>',
     '<div>Scoring: 1 → 2 → 4 → 8 → 16 → 32 pts per round</div>',
     '</div></div>',
     '<div class="bw">' + svgContent + '</div>',
     '<div class="footer">',
-    '<span>2026 NCAA Mascot Bracket &mdash; ' + playerName + '</span>',
-    '<span>East &bull; South &bull; West &bull; Midwest &bull; Final Four &bull; Championship</span>',
+    '<span>2026 NCAA Mascot Bracket — ' + playerName + '</span>',
+    '<span>East • South • West • Midwest • Final Four • Championship</span>',
     '<span>Picks locked March 19, 2026</span>',
     '</div>',
     '</body></html>'
   ].join('\n');
 
-  // Use Blob URL — works without pop-up permission and handles large content
-  const blob = new Blob([printHTML], {type: 'text/html'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.target = '_blank';
-  a.rel = 'noopener';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  // Clean up blob URL after a delay
-  setTimeout(() => URL.revokeObjectURL(url), 10000);
+  // Remove any existing print iframe
+  const existing = document.getElementById('print-frame');
+  if (existing) existing.remove();
+
+  // Create hidden iframe, write content into it, then print it
+  const iframe = document.createElement('iframe');
+  iframe.id = 'print-frame';
+  iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;border:none;';
+  document.body.appendChild(iframe);
+
+  iframe.onload = function() {
+    // Small delay to ensure images (base64) are rendered
+    setTimeout(function() {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+      // Clean up after print dialog closes
+      setTimeout(function() {
+        iframe.remove();
+      }, 60000);
+    }, 800);
+  };
+
+  // Write HTML into iframe
+  iframe.contentDocument.open();
+  iframe.contentDocument.write(printHTML);
+  iframe.contentDocument.close();
 }
+
 
 render();
 </script></body></html>

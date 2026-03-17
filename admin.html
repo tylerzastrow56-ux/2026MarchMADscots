@@ -195,35 +195,74 @@ function login(){
 
 
 const MASCOT_TEAMS=[
-  {key:'Ohio_State',      label:'Ohio State Buckeyes'},
-  {key:'Wisconsin',       label:'Wisconsin Badgers'},
-  {key:'Alabama',         label:'Alabama Crimson Tide'},
-  {key:'Northern_Iowa',   label:'Northern Iowa Panthers'},
-  {key:'Duke',            label:'Duke Blue Devils'},
-  {key:'Kentucky',        label:'Kentucky Wildcats'},
-  {key:'Purdue',          label:'Purdue Boilermakers'},
-  {key:'Texas_AM',        label:'Texas A&M Aggies'},
-  {key:'Texas_Tech',      label:'Texas Tech Red Raiders'},
-  {key:'Hofstra',         label:'Hofstra Pride'},
-  {key:'Tennessee_State', label:'Tennessee State Tigers'},
-  {key:'Cal_Baptist',     label:'Cal Baptist Lancers'},
-  {key:'Kansas',          label:'Kansas Jayhawks'},
-  {key:'South_Florida',   label:'South Florida Bulls'},
-  {key:'Vanderbilt',      label:'Vanderbilt Commodores'},
-  {key:'St_Johns',        label:"St. John's Red Storm"},
-  {key:'Howard',          label:'Howard Bison'},
-  {key:'LIU',             label:'LIU Sharks'},
-  {key:'Louisville',      label:'Louisville Cardinals'},
-  {key:'McNeese',         label:'McNeese Cowboys'},
-  {key:'Penn',            label:'Penn Quakers'},
-  {key:'Prairie_View',    label:'Prairie View Panthers'},
-  {key:'SMU',             label:'SMU Mustangs'},
-  {key:'BYU',             label:'BYU Cougars'},
-  {key:'Texas',           label:'Texas Longhorns'},
-  {key:'UConn',           label:'UConn Huskies'},
-  {key:'Clemson',         label:'Clemson Tigers'},
-  {key:'Missouri',        label:'Missouri Tigers'},
-  {key:'Siena',           label:'Siena Saints'},
+  {key:'Duke',label:'Duke Blue Devils',region:'East',seed:1},
+  {key:'UConn',label:'UConn Huskies',region:'East',seed:2},
+  {key:'Michigan_State',label:'Michigan State Spartans',region:'East',seed:3},
+  {key:'Kansas',label:'Kansas Jayhawks',region:'East',seed:4},
+  {key:'St_Johns',label:'St. John's Red Storm',region:'East',seed:5},
+  {key:'Louisville',label:'Louisville Cardinals',region:'East',seed:6},
+  {key:'UCLA',label:'UCLA Bruins',region:'East',seed:7},
+  {key:'Ohio_State',label:'Ohio State Buckeyes',region:'East',seed:8},
+  {key:'TCU',label:'TCU Horned Frogs',region:'East',seed:9},
+  {key:'UCF',label:'UCF Knights',region:'East',seed:10},
+  {key:'South_Florida',label:'South Florida Bulls',region:'East',seed:11},
+  {key:'Northern_Iowa',label:'N. Iowa Panthers',region:'East',seed:12},
+  {key:'Cal_Baptist',label:'Cal Baptist Lancers',region:'East',seed:13},
+  {key:'North_Dakota_State',label:'N. Dakota St. Bison',region:'East',seed:14},
+  {key:'Furman',label:'Furman Paladins',region:'East',seed:15},
+  {key:'Siena',label:'Siena Saints',region:'East',seed:16},
+  {key:'Florida',label:'Florida Gators',region:'South',seed:1},
+  {key:'Houston',label:'Houston Cougars',region:'South',seed:2},
+  {key:'Illinois',label:'Illinois Illini',region:'South',seed:3},
+  {key:'Nebraska',label:'Nebraska Cornhuskers',region:'South',seed:4},
+  {key:'Vanderbilt',label:'Vanderbilt Commodores',region:'South',seed:5},
+  {key:'North_Carolina',label:'N. Carolina Tar Heels',region:'South',seed:6},
+  {key:'Saint_Marys',label:'Saint Mary's Gaels',region:'South',seed:7},
+  {key:'Clemson',label:'Clemson Tigers',region:'South',seed:8},
+  {key:'Iowa',label:'Iowa Hawkeyes',region:'South',seed:9},
+  {key:'Texas_AM',label:'Texas A&M Aggies',region:'South',seed:10},
+  {key:'VCU',label:'VCU Rams',region:'South',seed:11},
+  {key:'McNeese',label:'McNeese Cowboys',region:'South',seed:12},
+  {key:'Troy',label:'Troy Trojans',region:'South',seed:13},
+  {key:'Penn',label:'Penn Quakers',region:'South',seed:14},
+  {key:'Idaho',label:'Idaho Vandals',region:'South',seed:15},
+  {key:'Prairie_View',label:'Prairie View Panthers',region:'South',seed:16},
+  {key:'Lehigh',label:'Lehigh Mountain Hawks',region:'South',seed:16},
+  {key:'Arizona',label:'Arizona Wildcats',region:'West',seed:1},
+  {key:'Purdue',label:'Purdue Boilermakers',region:'West',seed:2},
+  {key:'Gonzaga',label:'Gonzaga Bulldogs',region:'West',seed:3},
+  {key:'Arkansas',label:'Arkansas Razorbacks',region:'West',seed:4},
+  {key:'Wisconsin',label:'Wisconsin Badgers',region:'West',seed:5},
+  {key:'BYU',label:'BYU Cougars',region:'West',seed:6},
+  {key:'Miami',label:'Miami Hurricanes',region:'West',seed:7},
+  {key:'Villanova',label:'Villanova Wildcats',region:'West',seed:8},
+  {key:'Utah_State',label:'Utah State Aggies',region:'West',seed:9},
+  {key:'Missouri',label:'Missouri Tigers',region:'West',seed:10},
+  {key:'Texas',label:'Texas Longhorns',region:'West',seed:11},
+  {key:'NC_State',label:'NC State Wolfpack',region:'West',seed:11},
+  {key:'High_Point',label:'High Point Panthers',region:'West',seed:12},
+  {key:'Hawaii',label:'Hawai'i Rainbow Warriors',region:'West',seed:13},
+  {key:'Kennesaw_State',label:'Kennesaw St. Owls',region:'West',seed:14},
+  {key:'Queens',label:'Queens Royals',region:'West',seed:15},
+  {key:'LIU',label:'LIU Sharks',region:'West',seed:16},
+  {key:'Michigan',label:'Michigan Wolverines',region:'Midwest',seed:1},
+  {key:'Iowa_State',label:'Iowa State Cyclones',region:'Midwest',seed:2},
+  {key:'Virginia',label:'Virginia Cavaliers',region:'Midwest',seed:3},
+  {key:'Alabama',label:'Alabama Crimson Tide',region:'Midwest',seed:4},
+  {key:'Texas_Tech',label:'Texas Tech Red Raiders',region:'Midwest',seed:5},
+  {key:'Tennessee',label:'Tennessee Volunteers',region:'Midwest',seed:6},
+  {key:'Kentucky',label:'Kentucky Wildcats',region:'Midwest',seed:7},
+  {key:'Georgia',label:'Georgia Bulldogs',region:'Midwest',seed:8},
+  {key:'Saint_Louis',label:'Saint Louis Billikens',region:'Midwest',seed:9},
+  {key:'Santa_Clara',label:'Santa Clara Broncos',region:'Midwest',seed:10},
+  {key:'Miami_OH',label:'Miami OH RedHawks',region:'Midwest',seed:11},
+  {key:'SMU',label:'SMU Mustangs',region:'Midwest',seed:11},
+  {key:'Akron',label:'Akron Zips',region:'Midwest',seed:12},
+  {key:'Hofstra',label:'Hofstra Pride',region:'Midwest',seed:13},
+  {key:'Wright_State',label:'Wright State Raiders',region:'Midwest',seed:14},
+  {key:'Tennessee_State',label:'Tennessee St. Tigers',region:'Midwest',seed:15},
+  {key:'UMBC',label:'UMBC Retrievers',region:'Midwest',seed:16},
+  {key:'Howard',label:'Howard Bison',region:'Midwest',seed:16},
 ];
 
 async function loadAll(){
@@ -327,7 +366,7 @@ function buildUI(){
     <div class="tabs">
       <button class="tab ${curTab==='results'?'active':''}" onclick="switchTab('results')">Game Results</button>
       <button class="tab ${curTab==='entries'?'active':''}" onclick="switchTab('entries')">Entries (${brackets.length})</button>
-      <button class="tab ${curTab==='mascots'?'active':''}" onclick="switchTab('mascots')">Mascot Photos (${Object.keys(mascots).length}/${MASCOT_TEAMS.length})</button>
+      <button class="tab ${curTab==='mascots'?'active':''}" onclick="switchTab('mascots')">Mascots (${Object.keys(mascots).length}/68)</button>
     </div>
     <div id="tab-results" style="display:${curTab==='results'?'block':'none'}">${resultsHtml}</div>
     <div id="tab-entries" style="display:${curTab==='entries'?'block':'none'}">${entriesHtml}</div>
@@ -380,13 +419,18 @@ async function deleteEntry(id,name){
 }
 
 function buildMascotsHtml(){
-  let h='<div class="hint">Upload a better photo for any low-res mascot. Paste a direct image URL or upload a file. Images are stored permanently in the database.</div>';
-  h+='<div class="mascot-grid">';
-  MASCOT_TEAMS.forEach(t=>{
+  let h='<div class="hint">Upload or update the mascot photo for any team. Paste a direct image URL or upload a file. Photos are stored permanently in the database and override the embedded photo in the bracket picker.</div>';
+  const regions=['East','South','West','Midwest'];
+  regions.forEach(region=>{
+    const regionTeams=MASCOT_TEAMS.filter(t=>t.region===region);
+    const regionUpgraded=regionTeams.filter(t=>mascots[t.key]).length;
+    h+=`<div class="region-label">${region} &mdash; ${regionUpgraded}/${regionTeams.length} updated</div>`;
+    h+='<div class="mascot-grid">';
+    regionTeams.forEach(t=>{
     const hasUpgrade=!!mascots[t.key];
     const imgSrc=hasUpgrade?mascots[t.key]:'';
     h+=`<div class="mascot-card ${hasUpgrade?'has-upgrade':''}" id="mc-${t.key}">
-      <div class="team-name">${t.label}</div>
+      <div class="team-name"><span style="color:#aaa;font-size:10px;margin-right:4px">#${t.seed}</span>${t.label}</div>
       <div class="mascot-thumb-wrap">
         ${imgSrc?`<img src="${imgSrc}" alt="">`:'<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#aaa">No upgrade</div>'}
       </div>
@@ -403,8 +447,9 @@ function buildMascotsHtml(){
       </div>
       <div class="mascot-msg" id="msg-${t.key}"></div>
     </div>`;
+    });
+    h+='</div>';
   });
-  h+='</div>';
   return h;
 }
 

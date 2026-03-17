@@ -55,6 +55,30 @@ body{font-family:'Source Sans 3',sans-serif;background:#fff;color:#000;padding-b
 .status-ok{color:#080;font-size:11px;letter-spacing:1px;text-transform:uppercase}
 .status-err{color:#c00;font-size:11px}
 .hint{font-size:11px;color:#888;margin-bottom:16px;line-height:1.5}
+
+/* Mascot tab */
+.mascot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:4px}
+.mascot-card{background:#f9f9f9;border:1px solid #ddd;border-radius:8px;padding:12px;text-align:center;position:relative}
+.mascot-card.has-upgrade{border-color:#000}
+.mascot-card .team-name{font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;color:#000}
+.mascot-thumb-wrap{position:relative;width:100%;padding-top:100%;border-radius:6px;overflow:hidden;background:#eee;margin-bottom:8px}
+.mascot-thumb-wrap img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center}
+.mascot-status{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
+.status-upgraded{color:#080}.status-original{color:#aaa}
+.mascot-actions{display:flex;flex-direction:column;gap:6px}
+.url-input{font-size:11px;padding:5px 7px;border:1px solid #ccc;border-radius:3px;outline:none;width:100%}
+.url-input:focus{border-color:#000}
+.mascot-btn{font-family:'Oswald',sans-serif;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;border-radius:3px;padding:5px 10px;cursor:pointer;transition:all .12s;border:1px solid #000;background:#000;color:#fff;width:100%}
+.mascot-btn:hover{background:#333}
+.mascot-btn.secondary{background:transparent;color:#000}
+.mascot-btn.secondary:hover{background:#000;color:#fff}
+.mascot-btn.danger{border-color:#c00;color:#c00;background:transparent}
+.mascot-btn.danger:hover{background:#c00;color:#fff}
+.file-label{font-family:'Oswald',sans-serif;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;border:1px solid #000;border-radius:3px;padding:5px 10px;cursor:pointer;display:block;text-align:center;transition:all .12s}
+.file-label:hover{background:#000;color:#fff}
+.mascot-msg{font-size:10px;text-align:center;margin-top:4px;min-height:14px}
+.preview-wrap{width:100%;padding-top:100%;position:relative;border-radius:6px;overflow:hidden;background:#f0f0f0;margin-bottom:6px;border:1px solid #ddd;display:none}
+.preview-wrap img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center}
 </style>
 </head>
 <body>
@@ -159,7 +183,7 @@ const ALL_GAMES=[
   {id:'CH1',region:'Championship',round:'Championship',roundNum:5,team1:'FF1 Winner',seed1:'',team2:'FF2 Winner',seed2:''},
 ];
 
-let results={}, brackets=[], curTab='results';
+let results={}, brackets=[], mascots={}, curTab='results';
 
 function login(){
   if(document.getElementById('pwd').value===ADMIN_PWD){
@@ -169,15 +193,51 @@ function login(){
   }
 }
 
+
+const MASCOT_TEAMS=[
+  {key:'Ohio_State',      label:'Ohio State Buckeyes'},
+  {key:'Wisconsin',       label:'Wisconsin Badgers'},
+  {key:'Alabama',         label:'Alabama Crimson Tide'},
+  {key:'Northern_Iowa',   label:'Northern Iowa Panthers'},
+  {key:'Duke',            label:'Duke Blue Devils'},
+  {key:'Kentucky',        label:'Kentucky Wildcats'},
+  {key:'Purdue',          label:'Purdue Boilermakers'},
+  {key:'Texas_AM',        label:'Texas A&M Aggies'},
+  {key:'Texas_Tech',      label:'Texas Tech Red Raiders'},
+  {key:'Hofstra',         label:'Hofstra Pride'},
+  {key:'Tennessee_State', label:'Tennessee State Tigers'},
+  {key:'Cal_Baptist',     label:'Cal Baptist Lancers'},
+  {key:'Kansas',          label:'Kansas Jayhawks'},
+  {key:'South_Florida',   label:'South Florida Bulls'},
+  {key:'Vanderbilt',      label:'Vanderbilt Commodores'},
+  {key:'St_Johns',        label:"St. John's Red Storm"},
+  {key:'Howard',          label:'Howard Bison'},
+  {key:'LIU',             label:'LIU Sharks'},
+  {key:'Louisville',      label:'Louisville Cardinals'},
+  {key:'McNeese',         label:'McNeese Cowboys'},
+  {key:'Penn',            label:'Penn Quakers'},
+  {key:'Prairie_View',    label:'Prairie View Panthers'},
+  {key:'SMU',             label:'SMU Mustangs'},
+  {key:'BYU',             label:'BYU Cougars'},
+  {key:'Texas',           label:'Texas Longhorns'},
+  {key:'UConn',           label:'UConn Huskies'},
+  {key:'Clemson',         label:'Clemson Tigers'},
+  {key:'Missouri',        label:'Missouri Tigers'},
+  {key:'Siena',           label:'Siena Saints'},
+];
+
 async function loadAll(){
   try{
-    const [rRows,bRows]=await Promise.all([
+    const [rRows,bRows,mRows]=await Promise.all([
       sbFetch('/rest/v1/results?select=*'),
-      sbFetch('/rest/v1/brackets?select=id,player_name,champion,submitted,created_at&order=created_at.asc')
+      sbFetch('/rest/v1/brackets?select=id,player_name,champion,submitted,created_at&order=created_at.asc'),
+      sbFetch('/rest/v1/mascots?select=*')
     ]);
     results={};
     (rRows||[]).forEach(r=>{results[r.game_id]=r.winning_team;});
     brackets=bRows||[];
+    mascots={};
+    (mRows||[]).forEach(m=>{mascots[m.team_key]=m.img_base64;});
     // Populate later round labels from actual results
     populateLaterRounds();
     buildUI();
@@ -267,9 +327,11 @@ function buildUI(){
     <div class="tabs">
       <button class="tab ${curTab==='results'?'active':''}" onclick="switchTab('results')">Game Results</button>
       <button class="tab ${curTab==='entries'?'active':''}" onclick="switchTab('entries')">Entries (${brackets.length})</button>
+      <button class="tab ${curTab==='mascots'?'active':''}" onclick="switchTab('mascots')">Mascot Photos (${Object.keys(mascots).length}/${MASCOT_TEAMS.length})</button>
     </div>
     <div id="tab-results" style="display:${curTab==='results'?'block':'none'}">${resultsHtml}</div>
     <div id="tab-entries" style="display:${curTab==='entries'?'block':'none'}">${entriesHtml}</div>
+    <div id="tab-mascots" style="display:${curTab==='mascots'?'block':'none'}">${buildMascotsHtml()}</div>
   </div>`;
 }
 
@@ -277,6 +339,7 @@ function switchTab(tab){
   curTab=tab;
   document.getElementById('tab-results').style.display=tab==='results'?'block':'none';
   document.getElementById('tab-entries').style.display=tab==='entries'?'block':'none';
+  document.getElementById('tab-mascots').style.display=tab==='mascots'?'block':'none';
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   event.target.classList.add('active');
 }
@@ -315,6 +378,122 @@ async function deleteEntry(id,name){
     alert('Delete failed: '+e.message+'\n\nMake sure you have run this in Supabase SQL Editor:\ncreate policy \"anyone can delete brackets\" on brackets for delete using (true);');
   }
 }
+
+function buildMascotsHtml(){
+  let h='<div class="hint">Upload a better photo for any low-res mascot. Paste a direct image URL or upload a file. Images are stored permanently in the database.</div>';
+  h+='<div class="mascot-grid">';
+  MASCOT_TEAMS.forEach(t=>{
+    const hasUpgrade=!!mascots[t.key];
+    const imgSrc=hasUpgrade?mascots[t.key]:'';
+    h+=`<div class="mascot-card ${hasUpgrade?'has-upgrade':''}" id="mc-${t.key}">
+      <div class="team-name">${t.label}</div>
+      <div class="mascot-thumb-wrap">
+        ${imgSrc?`<img src="${imgSrc}" alt="">`:'<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#aaa">No upgrade</div>'}
+      </div>
+      <div class="mascot-status ${hasUpgrade?'status-upgraded':'status-original'}">${hasUpgrade?'&#10003; Upgraded':'Original (low-res)'}</div>
+      <div id="prev-wrap-${t.key}" class="preview-wrap"><img id="prev-img-${t.key}" src="" alt=""></div>
+      <div class="mascot-actions">
+        <input class="url-input" id="url-${t.key}" placeholder="Paste direct image URL..." 
+          onpaste="setTimeout(()=>previewUrl('${t.key}'),50)"
+          oninput="previewUrl('${t.key}')">
+        <button class="mascot-btn" onclick="saveMascotUrl('${t.key}')">Fetch &amp; Save URL</button>
+        <label class="file-label" for="file-${t.key}">&#128247; Upload Photo</label>
+        <input type="file" id="file-${t.key}" accept="image/*" style="display:none" onchange="saveMascotFile('${t.key}',this)">
+        ${hasUpgrade?`<button class="mascot-btn danger" onclick="removeMascot('${t.key}')">&#10005; Remove Upgrade</button>`:''}
+      </div>
+      <div class="mascot-msg" id="msg-${t.key}"></div>
+    </div>`;
+  });
+  h+='</div>';
+  return h;
+}
+
+function previewUrl(key){
+  const url=document.getElementById('url-'+key).value.trim();
+  const pw=document.getElementById('prev-wrap-'+key);
+  const pi=document.getElementById('prev-img-'+key);
+  if(!url){pw.style.display='none';return;}
+  pw.style.display='block';
+  pi.src=url;
+  pi.onerror=()=>{pw.style.display='none';};
+}
+
+async function saveMascotUrl(key){
+  const url=document.getElementById('url-'+key).value.trim();
+  const msg=document.getElementById('msg-'+key);
+  if(!url){msg.textContent='Paste a URL first.';msg.style.color='#c00';return;}
+  msg.textContent='Fetching...';msg.style.color='#888';
+  try{
+    const resp=await fetch(url);
+    if(!resp.ok)throw new Error('Could not fetch image ('+resp.status+')');
+    const blob=await resp.blob();
+    if(!blob.type.startsWith('image/'))throw new Error('URL is not an image');
+    const b64=await blobToBase64(blob,450);
+    await upsertMascot(key,b64);
+    mascots[key]=b64;
+    msg.textContent='\u2713 Saved!';msg.style.color='#080';
+    setTimeout(()=>buildUI(),800);
+  }catch(e){
+    msg.textContent='Error: '+e.message;msg.style.color='#c00';
+    console.error(e);
+  }
+}
+
+async function saveMascotFile(key,input){
+  const msg=document.getElementById('msg-'+key);
+  if(!input.files||!input.files[0])return;
+  msg.textContent='Processing...';msg.style.color='#888';
+  try{
+    const b64=await blobToBase64(input.files[0],450);
+    await upsertMascot(key,b64);
+    mascots[key]=b64;
+    msg.textContent='\u2713 Saved!';msg.style.color='#080';
+    setTimeout(()=>buildUI(),800);
+  }catch(e){
+    msg.textContent='Error: '+e.message;msg.style.color='#c00';
+  }
+}
+
+async function removeMascot(key){
+  if(!confirm('Remove the upgraded photo for '+key+'? The original embedded photo will be used instead.'))return;
+  try{
+    await sbFetch('/rest/v1/mascots?team_key=eq.'+key,'DELETE');
+    delete mascots[key];
+    buildUI();
+  }catch(e){alert('Remove failed: '+e.message);}
+}
+
+async function upsertMascot(key,b64){
+  await sbFetch('/rest/v1/mascots','POST',
+    {team_key:key,img_base64:b64,updated_at:new Date().toISOString()},
+    {'Prefer':'resolution=merge-duplicates,return=representation'});
+}
+
+function blobToBase64(blob,maxSize){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      // Resize via canvas
+      const img=new Image();
+      img.onload=()=>{
+        const canvas=document.createElement('canvas');
+        let w=img.width,h=img.height;
+        if(w>maxSize||h>maxSize){
+          const r=Math.min(maxSize/w,maxSize/h);
+          w=Math.round(w*r);h=Math.round(h*r);
+        }
+        canvas.width=w;canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        resolve(canvas.toDataURL('image/jpeg',0.82));
+      };
+      img.onerror=()=>reject(new Error('Could not load image'));
+      img.src=e.target.result;
+    };
+    reader.onerror=()=>reject(new Error('Could not read file'));
+    reader.readAsDataURL(blob);
+  });
+}
+
 </script>
 </body>
 </html>

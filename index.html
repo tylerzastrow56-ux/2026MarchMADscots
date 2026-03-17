@@ -898,6 +898,38 @@ function flattenPicks(savedPhases, allPhaseGames) {
 const SUPA_URL = 'https://bfqvcnchmpyztovcgkbd.supabase.co';
 const SUPA_KEY = 'sb_publishable_ucCXKlrFtpA5c-WoNUDpsQ_WwEzJg4W';
 
+const MASCOT_KEY_TO_TEAM = {"Ohio_State": "Ohio State", "Wisconsin": "Wisconsin", "Alabama": "Alabama", "Northern_Iowa": "N. Iowa", "Duke": "Duke", "Kentucky": "Kentucky", "Purdue": "Purdue", "Texas_AM": "Texas A&M", "Texas_Tech": "Texas Tech", "Hofstra": "Hofstra", "Tennessee_State": "Tennessee St.", "Cal_Baptist": "Cal Baptist", "Kansas": "Kansas", "South_Florida": "South Florida", "Vanderbilt": "Vanderbilt", "St_Johns": "St. John's", "Howard": "Howard", "LIU": "LIU", "Louisville": "Louisville", "McNeese": "McNeese", "Penn": "Penn", "Prairie_View": "Prairie View", "SMU": "SMU", "BYU": "BYU", "Texas": "Texas", "UConn": "UConn", "Clemson": "Clemson", "Missouri": "Missouri", "Siena": "Siena"};
+
+// ── Load mascot upgrades from Supabase and patch R64 ─────────────────────────
+async function loadMascotUpgrades() {
+  try {
+    const r = await fetch(SUPA_URL + '/rest/v1/mascots?select=team_key,img_base64', {
+      headers: {'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY}
+    });
+    if (!r.ok) return;
+    const rows = await r.json();
+    if (!rows || !rows.length) return;
+
+    // Build lookup: team name in R64 -> new base64
+    const upgrades = {};
+    rows.forEach(row => {
+      const teamName = MASCOT_KEY_TO_TEAM[row.team_key];
+      if (teamName && row.img_base64) upgrades[teamName] = row.img_base64;
+    });
+
+    // Patch R64 array in place
+    R64.forEach(g => {
+      if (upgrades[g.team1])  g.img1  = upgrades[g.team1];
+      if (upgrades[g.team2])  g.img2  = upgrades[g.team2];
+      if (g.team2b && upgrades[g.team2b]) g.img2b = upgrades[g.team2b];
+    });
+  } catch(e) {
+    console.warn('Could not load mascot upgrades:', e.message);
+    // Fail silently — embedded photos still show
+  }
+}
+
+
 async function sbFetch(path, method='GET', body=null, extraHeaders={}) {
   const opts = {
     method,
@@ -1226,5 +1258,6 @@ function printBracket(idx) {
 }
 
 
-render();
+// Load mascot upgrades from Supabase, then render
+loadMascotUpgrades().then(() => render());
 </script></body></html>

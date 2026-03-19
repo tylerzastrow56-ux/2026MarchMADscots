@@ -83,14 +83,7 @@ body{font-family:'Source Sans 3',sans-serif;background:#fff;color:#000;padding-b
 </head>
 <body>
 <div class="hdr"><h1>2026 NCAA Bracket</h1><p>Admin Panel</p></div>
-<div id="root">
-  <div class="login-box">
-    <h2>Admin Login</h2>
-    <input type="password" id="pwd" placeholder="Password..." onkeydown="if(event.key==='Enter')login()">
-    <button class="btn" style="width:100%;margin-top:4px" onclick="login()">Enter</button>
-    <div id="login-err" style="color:#c00;font-size:12px;margin-top:8px"></div>
-  </div>
-</div>
+<div id="root"></div>
 <script>
 const SUPA_URL='https://bfqvcnchmpyztovcgkbd.supabase.co',SUPA_KEY='sb_publishable_ucCXKlrFtpA5c-WoNUDpsQ_WwEzJg4W';
 const ADMIN_PWD='bracket2026';
@@ -185,11 +178,27 @@ const ALL_GAMES=[
 
 let results={}, brackets=[], mascots={}, curTab='results';
 
+function renderLogin(){
+  document.getElementById('root').innerHTML=`
+    <div class="login-box">
+      <h2>Admin Login</h2>
+      <input type="password" id="pwd" placeholder="Password..."
+        onkeydown="if(event.key==='Enter')login()">
+      <button class="btn" style="width:100%;margin-top:4px" onclick="login()">Enter</button>
+      <div id="login-err" style="color:#c00;font-size:12px;margin-top:8px"></div>
+    </div>`;
+  setTimeout(()=>{const e=document.getElementById('pwd');if(e)e.focus();},50);
+}
+
 function login(){
-  if(document.getElementById('pwd').value===ADMIN_PWD){
+  const pwd=document.getElementById('pwd');
+  if(!pwd)return;
+  if(pwd.value===ADMIN_PWD){
     loadAll();
   }else{
     document.getElementById('login-err').textContent='Incorrect password.';
+    pwd.value='';
+    pwd.focus();
   }
 }
 
@@ -539,6 +548,7 @@ function blobToBase64(blob,maxSize){
   });
 }
 
+renderLogin();
 </script>
 </body>
 </html>

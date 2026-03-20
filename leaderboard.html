@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Leaderboard — 2026 NCAA Mascot Bracket</title>
+<title>Leaderboard  -  2026 NCAA Mascot Bracket</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -95,7 +95,7 @@ async function loadAll() {
     brackets=bRows||[];
     results={};
     (rRows||[]).forEach(function(r){ results[r.game_id]=r.winning_team; });
-    document.getElementById('last-update').textContent='Updated '+new Date().toLocaleTimeString()+' — '+brackets.length+' entries';
+    document.getElementById('last-update').textContent='Updated '+new Date().toLocaleTimeString()+'  -  '+brackets.length+' entries';
     render();
   } catch(e) {
     document.getElementById('content').innerHTML='<div class="msg" style="color:#c00">Error: '+e.message+'</div>';
@@ -175,9 +175,9 @@ function render() {
     html+='<td class="rank">'+medal+'</td>';
     html+='<td><div class="player-name">'+entry.player_name+'</div>';
     html+='<div class="prog-wrap"><div class="prog-fill" style="width:'+accPct+'%"></div></div></td>';
-    html+='<td><div class="champ">'+(entry.champion||'—')+'</div></td>';
+    html+='<td><div class="champ">'+(entry.champion||' - ')+'</div></td>';
     entry.byRound.forEach(function(pts) {
-      html+='<td class="r"><span style="font-family:Oswald,sans-serif;font-weight:600;font-size:13px;color:'+(pts>0?'#000':'#ccc')+'">'+(pts||'—')+'</span></td>';
+      html+='<td class="r"><span style="font-family:Oswald,sans-serif;font-weight:600;font-size:13px;color:'+(pts>0?'#000':'#ccc')+'">'+(pts||' - ')+'</span></td>';
     });
     html+='<td class="score">'+entry.total+'</td>';
     html+='<td class="maxleft">+'+entry.maxPossible+'</td>';
@@ -191,7 +191,7 @@ function render() {
   window._scored=scored;
 }
 
-// ── Bracket modal ─────────────────────────────────────────────────────────────
+// -- Bracket modal -------------------------------------------------------------
 function showBracket(i) {
   var entry=window._scored[i];
   if(!entry) return;
@@ -331,7 +331,7 @@ function buildBracketSVG(playerName, picks, allTeams) {
   function drawSlot(x, y, gid, teamName, seed, strikethrough) {
     var c=getSlotColor(gid, teamName);
     var label=teamName||'';
-    if(label.length>14) label=label.substring(0,13)+'…';
+    if(label.length>14) label=label.substring(0,13)+'...';
     p.push('<rect x="'+x+'" y="'+y+'" width="'+SW+'" height="'+(SH-2)+'" rx="2" fill="'+c.fill+'" stroke="'+c.stroke+'" stroke-width="1"/>');
     if(seed) {
       p.push('<rect x="'+x+'" y="'+y+'" width="16" height="'+(SH-2)+'" rx="2" fill="'+c.stroke+'"/>');
@@ -453,7 +453,7 @@ function showBracket(i) {
   var allTeams=buildAllGameTeams();
   var svgHtml=buildBracketSVG(entry.player_name, picks, allTeams);
   var s=scoreEntry(picks);
-  var scoreStr=s.total+' pts — '+s.correct+' correct of '+s.gamesScored+' played';
+  var scoreStr=s.total+' pts  -  '+s.correct+' correct of '+s.gamesScored+' played';
 
   var html='<div class="modal-overlay" id="modal-overlay" onclick="closeModalOverlay(event)">';
   html+='<div class="modal-box">';

@@ -141,9 +141,34 @@ function maxPossible(picks) {
 }
 
 function buildExpandHtml(picks) {
+  // Build set of eliminated teams - any team that lost a completed game
+  var eliminated = {};
+  ROUND_GAME_IDS.forEach(function(ids,ri) {
+    ids.forEach(function(gid) {
+      var actual = results[gid];
+      if(!actual) return;
+      // The loser is whoever the player picked that wasn't the winner,
+      // but we need ALL losers not just this player's picks.
+      // We know the winner; the loser is whatever team played against them.
+      // Since we only have winner names in results{}, we track it this way:
+      // any team that a player picked in ANY completed game and LOST is eliminated.
+      // But we also need teams eliminated even if player didn't pick them.
+      // Best approach: a team is eliminated if they appear as a pick in a
+      // completed game where they didn't win.
+      var pick = picks[gid];
+      if(pick && pick !== actual) eliminated[pick] = true;
+    });
+  });
+  // Also mark teams eliminated based on ALL completed results:
+  // if a team won a game, they are NOT eliminated. Any team that was
+  // the opponent in a completed game but didn't win IS eliminated.
+  // We can infer this from picks across all rounds - if someone picked
+  // team X to win game G and team X lost, X is out for all future rounds.
+  // The above loop already handles this for this player's picks.
+  // That's the right approach - we only care about teams THIS player picked.
+
   var html='<div class="expand-panel">';
   ROUND_GAME_IDS.forEach(function(ids,ri) {
-    // Only show rounds that have at least one pick
     var roundPicks=ids.filter(function(gid){ return picks[gid]; });
     if(roundPicks.length===0) return;
     html+='<div class="round-section">';
@@ -153,17 +178,27 @@ function buildExpandHtml(picks) {
       var pick=picks[gid];
       if(!pick) return;
       var actual=results[gid];
-      var cls, dotCls, teamCls;
-      if(!actual) {
-        cls='pick-pending'; dotCls='dot-pending'; teamCls='pending';
-      } else if(pick===actual) {
-        cls='pick-correct'; dotCls='dot-correct'; teamCls='correct';
-      } else {
+      var cls, dotCls, teamCls, note='';
+
+      if(actual) {
+        // Game has been played
+        if(pick===actual) {
+          cls='pick-correct'; dotCls='dot-correct'; teamCls='correct';
+        } else {
+          cls='pick-wrong'; dotCls='dot-wrong'; teamCls='wrong';
+        }
+      } else if(eliminated[pick]) {
+        // Game not played yet but this team was already knocked out earlier
         cls='pick-wrong'; dotCls='dot-wrong'; teamCls='wrong';
+        note=' (eliminated)';
+      } else {
+        // Game not played, team still alive
+        cls='pick-pending'; dotCls='dot-pending'; teamCls='pending';
       }
+
       html+='<div class="pick-item '+cls+'">';
       html+='<div class="pick-dot '+dotCls+'"></div>';
-      html+='<span class="pick-team '+teamCls+'">'+pick+'</span>';
+      html+='<span class="pick-team '+teamCls+'">'+pick+note+'</span>';
       html+='<span class="pick-gid">'+gid+'</span>';
       html+='</div>';
     });

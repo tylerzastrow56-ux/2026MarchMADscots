@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Leaderboard  -  2026 NCAA Mascot Bracket</title>
+<title>Leaderboard - 2026 NCAA Mascot Bracket</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -24,28 +24,34 @@ body{font-family:'Source Sans 3',sans-serif;background:#fff;color:#000;padding-b
 .lb-table th{font-family:'Oswald',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#888;padding:6px 10px;text-align:left;border-bottom:2px solid #000;white-space:nowrap}
 .lb-table th.r{text-align:right}
 .lb-table td{padding:8px 10px;border-bottom:1px solid #eee;vertical-align:middle}
-.lb-table tr.data-row{cursor:pointer;transition:background .1s}
-.lb-table tr.data-row:hover td{background:#f5f5f5}
+.data-row{cursor:pointer}
+.data-row:hover td{background:#f9f9f9}
 .rank{font-family:'Oswald',sans-serif;font-size:16px;font-weight:700;width:36px}
-.player-name{font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;text-transform:uppercase}
-.name-hint{font-size:10px;color:#aaa;font-family:'Source Sans 3',sans-serif;font-weight:400;text-transform:none;letter-spacing:0;margin-left:4px;vertical-align:middle}
+.pname{font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;text-transform:uppercase}
 .champ{font-size:11px;color:#666}
 .score{font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;text-align:right}
 .maxleft{font-size:10px;color:#aaa;text-align:right}
 .prog-wrap{background:#eee;border-radius:2px;height:3px;margin-top:4px}
 .prog-fill{background:#000;height:3px;border-radius:2px}
-/* Modal */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:100;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;-webkit-overflow-scrolling:touch}
-.modal-box{background:#fff;border-radius:8px;width:100%;max-width:960px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.4);margin:auto}
-.modal-hdr{background:#000;color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.modal-title{font-family:'Oswald',sans-serif;font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:2px}
-.modal-score{font-family:'Oswald',sans-serif;font-size:13px;color:#aaa;white-space:nowrap}
-.modal-close{background:transparent;border:1px solid #666;color:#fff;font-family:'Oswald',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;padding:5px 12px;border-radius:3px;cursor:pointer;flex-shrink:0}
-.modal-close:hover{background:#fff;color:#000;border-color:#fff}
-.modal-legend{display:flex;gap:14px;padding:8px 14px;background:#f9f9f9;border-bottom:1px solid #eee;flex-wrap:wrap}
-.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:#555}
-.legend-dot{width:14px;height:14px;border-radius:3px;flex-shrink:0}
-.modal-body{overflow-x:auto;padding:14px;-webkit-overflow-scrolling:touch}
+/* Expand panel */
+.expand-row td{padding:0;border-bottom:none}
+.expand-panel{background:#fafafa;border-bottom:1px solid #eee;padding:12px 14px}
+.round-section{margin-bottom:10px}
+.round-title{font-family:'Oswald',sans-serif;font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#888;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid #eee}
+.pick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:4px}
+.pick-item{display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:4px;font-size:12px}
+.pick-correct{background:#e8f5e9;border:1px solid #a5d6a7}
+.pick-wrong{background:#ffebee;border:1px solid #ef9a9a}
+.pick-pending{background:#fff;border:1px solid #e0e0e0}
+.pick-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot-correct{background:#2e7d32}
+.dot-wrong{background:#c62828}
+.dot-pending{background:#bbb}
+.pick-team{font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;font-size:11px}
+.pick-team.wrong{text-decoration:line-through;color:#c62828}
+.pick-team.correct{color:#1b5e20}
+.pick-team.pending{color:#555}
+.pick-gid{font-size:9px;color:#bbb;margin-left:auto;flex-shrink:0}
 .msg{text-align:center;padding:40px 20px;font-size:14px;color:#888;font-family:'Oswald',sans-serif;letter-spacing:2px;text-transform:uppercase}
 </style>
 </head>
@@ -56,15 +62,14 @@ body{font-family:'Source Sans 3',sans-serif;background:#fff;color:#000;padding-b
 </div>
 <div class="wrap">
   <div class="top-nav">
-    <a href="index.html">&#8592; Enter Bracket</a>
+    <a href="index.html">&larr; Enter Bracket</a>
     <button class="refresh-btn" onclick="loadAll()">&#8635; Refresh</button>
   </div>
   <div id="content"><div class="msg">Loading&hellip;</div></div>
 </div>
-<div id="modal" style="display:none"></div>
-
 <script>
-var SUPA_URL='https://bfqvcnchmpyztovcgkbd.supabase.co', SUPA_KEY='sb_publishable_ucCXKlrFtpA5c-WoNUDpsQ_WwEzJg4W';
+var SUPA_URL='https://bfqvcnchmpyztovcgkbd.supabase.co';
+var SUPA_KEY='sb_publishable_ucCXKlrFtpA5c-WoNUDpsQ_WwEzJg4W';
 
 async function sbFetch(path) {
   var r = await fetch(SUPA_URL+path, {headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}});
@@ -72,10 +77,8 @@ async function sbFetch(path) {
   return r.json();
 }
 
-var GAME_TEAMS = {"E1": {"t1": "Duke", "s1": 1, "t2": "Siena", "s2": 16}, "E2": {"t1": "Ohio State", "s1": 8, "t2": "TCU", "s2": 9}, "E3": {"t1": "St. John's", "s1": 5, "t2": "N. Iowa", "s2": 12}, "E4": {"t1": "Kansas", "s1": 4, "t2": "Cal Baptist", "s2": 13}, "E5": {"t1": "Louisville", "s1": 6, "t2": "South Florida", "s2": 11}, "E6": {"t1": "Michigan State", "s1": 3, "t2": "N. Dakota St.", "s2": 14}, "E7": {"t1": "UCLA", "s1": 7, "t2": "UCF", "s2": 10}, "E8": {"t1": "UConn", "s1": 2, "t2": "Furman", "s2": 15}, "S1": {"t1": "Florida", "s1": 1, "t2": "Prairie View", "s2": 16, "t2b": "Lehigh"}, "S2": {"t1": "Clemson", "s1": 8, "t2": "Iowa", "s2": 9}, "S3": {"t1": "Vanderbilt", "s1": 5, "t2": "McNeese", "s2": 12}, "S4": {"t1": "Nebraska", "s1": 4, "t2": "Troy", "s2": 13}, "S5": {"t1": "N. Carolina", "s1": 6, "t2": "VCU", "s2": 11}, "S6": {"t1": "Illinois", "s1": 3, "t2": "Penn", "s2": 14}, "S7": {"t1": "Saint Mary's", "s1": 7, "t2": "Texas A&M", "s2": 10}, "S8": {"t1": "Houston", "s1": 2, "t2": "Idaho", "s2": 15}, "W1": {"t1": "Arizona", "s1": 1, "t2": "LIU", "s2": 16}, "W2": {"t1": "Villanova", "s1": 8, "t2": "Utah State", "s2": 9}, "W3": {"t1": "Wisconsin", "s1": 5, "t2": "High Point", "s2": 12}, "W4": {"t1": "Arkansas", "s1": 4, "t2": "Hawaii", "s2": 13}, "W5": {"t1": "BYU", "s1": 6, "t2": "Texas", "s2": 11, "t2b": "NC State"}, "W6": {"t1": "Gonzaga", "s1": 3, "t2": "Kennesaw St.", "s2": 14}, "W7": {"t1": "Miami", "s1": 7, "t2": "Missouri", "s2": 10}, "W8": {"t1": "Purdue", "s1": 2, "t2": "Queens", "s2": 15}, "M1": {"t1": "Michigan", "s1": 1, "t2": "UMBC", "s2": 16, "t2b": "Howard"}, "M2": {"t1": "Georgia", "s1": 8, "t2": "Saint Louis", "s2": 9}, "M3": {"t1": "Texas Tech", "s1": 5, "t2": "Akron", "s2": 12}, "M4": {"t1": "Alabama", "s1": 4, "t2": "Hofstra", "s2": 13}, "M5": {"t1": "Tennessee", "s1": 6, "t2": "Miami OH", "s2": 11, "t2b": "SMU"}, "M6": {"t1": "Virginia", "s1": 3, "t2": "Wright State", "s2": 14}, "M7": {"t1": "Kentucky", "s1": 7, "t2": "Santa Clara", "s2": 10}, "M8": {"t1": "Iowa State", "s1": 2, "t2": "Tennessee St.", "s2": 15}};
-
 var POINTS = [1,2,4,8,16,32];
-var ROUND_NAMES = ['R64','R32','Sweet 16','Elite 8','Final Four','Champ'];
+var ROUND_LABELS = ['Round of 64','Round of 32','Sweet 16','Elite 8','Final Four','Championship'];
 var ROUND_GAME_IDS = [
   ['E1','E2','E3','E4','E5','E6','E7','E8','S1','S2','S3','S4','S5','S6','S7','S8','W1','W2','W3','W4','W5','W6','W7','W8','M1','M2','M3','M4','M5','M6','M7','M8'],
   ['ER1','ER2','ER3','ER4','SR1','SR2','SR3','SR4','WR1','WR2','WR3','WR4','MR1','MR2','MR3','MR4'],
@@ -85,17 +88,17 @@ var ROUND_GAME_IDS = [
   ['CH1']
 ];
 
-var brackets=[], results={};
+var brackets=[], results={}, expandedIdx=null;
 
 async function loadAll() {
   document.getElementById('last-update').textContent='Loading...';
   try {
-    var bRows=await sbFetch('/rest/v1/brackets?select=*&order=created_at.asc');
-    var rRows=await sbFetch('/rest/v1/results?select=*');
-    brackets=bRows||[];
-    results={};
+    var bRows = await sbFetch('/rest/v1/brackets?select=*&order=created_at.asc');
+    var rRows = await sbFetch('/rest/v1/results?select=*');
+    brackets = bRows||[];
+    results = {};
     (rRows||[]).forEach(function(r){ results[r.game_id]=r.winning_team; });
-    document.getElementById('last-update').textContent='Updated '+new Date().toLocaleTimeString()+'  -  '+brackets.length+' entries';
+    document.getElementById('last-update').textContent='Updated '+new Date().toLocaleTimeString()+' - '+brackets.length+' entries';
     render();
   } catch(e) {
     document.getElementById('content').innerHTML='<div class="msg" style="color:#c00">Error: '+e.message+'</div>';
@@ -117,13 +120,13 @@ function scoreEntry(picks) {
 }
 
 function maxPossible(picks) {
-  var eliminated=new Set();
+  var eliminated={};
   ROUND_GAME_IDS.forEach(function(ids,ri) {
     ids.forEach(function(gid) {
       var actual=results[gid];
       if(!actual) return;
       var pick=picks[gid];
-      if(pick && pick!==actual) eliminated.add(pick);
+      if(pick && pick!==actual) eliminated[pick]=true;
     });
   });
   var possible=0;
@@ -131,10 +134,43 @@ function maxPossible(picks) {
     ids.forEach(function(gid) {
       if(results[gid]) return;
       var pick=picks[gid];
-      if(pick && !eliminated.has(pick)) possible+=POINTS[ri];
+      if(pick && !eliminated[pick]) possible+=POINTS[ri];
     });
   });
   return possible;
+}
+
+function buildExpandHtml(picks) {
+  var html='<div class="expand-panel">';
+  ROUND_GAME_IDS.forEach(function(ids,ri) {
+    // Only show rounds that have at least one pick
+    var roundPicks=ids.filter(function(gid){ return picks[gid]; });
+    if(roundPicks.length===0) return;
+    html+='<div class="round-section">';
+    html+='<div class="round-title">'+ROUND_LABELS[ri]+'</div>';
+    html+='<div class="pick-grid">';
+    ids.forEach(function(gid) {
+      var pick=picks[gid];
+      if(!pick) return;
+      var actual=results[gid];
+      var cls, dotCls, teamCls;
+      if(!actual) {
+        cls='pick-pending'; dotCls='dot-pending'; teamCls='pending';
+      } else if(pick===actual) {
+        cls='pick-correct'; dotCls='dot-correct'; teamCls='correct';
+      } else {
+        cls='pick-wrong'; dotCls='dot-wrong'; teamCls='wrong';
+      }
+      html+='<div class="pick-item '+cls+'">';
+      html+='<div class="pick-dot '+dotCls+'"></div>';
+      html+='<span class="pick-team '+teamCls+'">'+pick+'</span>';
+      html+='<span class="pick-gid">'+gid+'</span>';
+      html+='</div>';
+    });
+    html+='</div></div>';
+  });
+  html+='</div>';
+  return html;
 }
 
 function render() {
@@ -144,7 +180,8 @@ function render() {
   var scored=entries.map(function(b) {
     var s=scoreEntry(b.picks||{});
     var mp=maxPossible(b.picks||{});
-    return Object.assign({},b,s,{maxPossible:mp});
+    return {id:b.id,player_name:b.player_name,champion:b.champion,picks:b.picks||{},
+            total:s.total,byRound:s.byRound,correct:s.correct,gamesScored:s.gamesScored,maxPossible:mp};
   }).sort(function(a,b){ return b.total-a.total||(b.maxPossible-a.maxPossible); });
 
   var html='';
@@ -161,338 +198,48 @@ function render() {
     return;
   }
 
+  html+='<p style="font-size:11px;color:#aaa;margin-bottom:8px;text-align:right">Click a name to see picks</p>';
   html+='<table class="lb-table"><thead><tr>';
-  html+='<th></th><th>Name <span style="font-size:9px;color:#bbb;font-weight:400">(click for bracket)</span></th><th>Champion Pick</th>';
-  ROUND_NAMES.forEach(function(r){ html+='<th class="r">'+r+'</th>'; });
+  html+='<th></th><th>Name</th><th>Champion Pick</th>';
+  ['R64','R32','S16','E8','FF','Champ'].forEach(function(r){ html+='<th class="r">'+r+'</th>'; });
   html+='<th class="r">Total</th><th class="r">Max Left</th>';
   html+='</tr></thead><tbody>';
 
   scored.forEach(function(entry,i) {
     var rank=i+1;
-    var medal=rank===1?'&#127945;':rank===2?'&#127946;':rank===3?'&#127947;':rank;
+    var medal=rank===1?'&#127945;':rank===2?'&#127946;':rank===3?'&#127947;':''+rank;
     var accPct=entry.gamesScored>0?Math.round(entry.correct/entry.gamesScored*100):0;
-    html+='<tr class="data-row" onclick="showBracket('+i+')" title="Click to view bracket">';
+    var isExpanded=(expandedIdx===i);
+
+    html+='<tr class="data-row" onclick="toggleExpand('+i+')">';
     html+='<td class="rank">'+medal+'</td>';
-    html+='<td><div class="player-name">'+entry.player_name+'</div>';
+    html+='<td><div class="pname">'+entry.player_name+(isExpanded?' &#9650;':' &#9660;')+'</div>';
     html+='<div class="prog-wrap"><div class="prog-fill" style="width:'+accPct+'%"></div></div></td>';
-    html+='<td><div class="champ">'+(entry.champion||' - ')+'</div></td>';
+    html+='<td><div class="champ">'+(entry.champion||'-')+'</div></td>';
     entry.byRound.forEach(function(pts) {
-      html+='<td class="r"><span style="font-family:Oswald,sans-serif;font-weight:600;font-size:13px;color:'+(pts>0?'#000':'#ccc')+'">'+(pts||' - ')+'</span></td>';
+      html+='<td class="r"><span style="font-family:Oswald,sans-serif;font-weight:600;font-size:13px;color:'+(pts>0?'#000':'#ccc')+'">'+(pts||'-')+'</span></td>';
     });
     html+='<td class="score">'+entry.total+'</td>';
     html+='<td class="maxleft">+'+entry.maxPossible+'</td>';
     html+='</tr>';
+
+    if(isExpanded) {
+      html+='<tr class="expand-row"><td colspan="10">'+buildExpandHtml(entry.picks)+'</td></tr>';
+    }
   });
 
   html+='</tbody></table>';
   document.getElementById('content').innerHTML=html;
-
-  // store scored for bracket modal
   window._scored=scored;
 }
 
-// -- Bracket modal -------------------------------------------------------------
-function showBracket(i) {
-  var entry=window._scored[i];
-  if(!entry) return;
-  var picks=entry.picks||{};
-
-  // Build full results lookup including inferred winners from results
-  // For R32+ games we need to know both teams - infer from prior round
-  var allGameTeams=buildAllGameTeams();
-
-  var svgHtml=buildBracketSVG(entry.player_name, picks, allGameTeams);
-
-  var s=scoreEntry(picks);
-  var scoreStr=s.total+' pts &mdash; '+s.correct+' correct of '+s.gamesScored+' played';
-
-  var html='<div class="modal-overlay" onclick="closeModal(event)">';
-  html+='<div class="modal-box" onclick="event.stopPropagation()">';
-  html+='<div class="modal-hdr">';
-  html+='<div class="modal-title">'+entry.player_name+'</div>';
-  html+='<div class="modal-score">'+scoreStr+'</div>';
-  html+='<button class="modal-close" onclick="closeModal()">&#10005; Close</button>';
-  html+='</div>';
-  html+='<div class="modal-legend">';
-  html+='<div class="legend-item"><div class="legend-dot" style="background:#c8e6c9;border:1px solid #388e3c"></div>Correct pick</div>';
-  html+='<div class="legend-item"><div class="legend-dot" style="background:#ffcdd2;border:1px solid #c62828"></div>Wrong pick</div>';
-  html+='<div class="legend-item"><div class="legend-dot" style="background:#fff;border:1px solid #ddd"></div>Not yet played</div>';
-  html+='<div class="legend-item"><div class="legend-dot" style="background:#f5f5f5;border:1px solid #eee"></div>No pick</div>';
-  html+='</div>';
-  html+='<div class="modal-body">'+svgHtml+'</div>';
-  html+='</div></div>';
-
-  document.getElementById('modal').innerHTML=html;
-  document.getElementById('modal').style.display='block';
-  document.body.style.overflow='hidden';
+function toggleExpand(i) {
+  expandedIdx=(expandedIdx===i)?null:i;
+  render();
 }
-
-function closeModal(e) {
-  if(e && e.target!==document.querySelector('.modal-overlay')) return;
-  document.getElementById('modal').style.display='none';
-  document.getElementById('modal').innerHTML='';
-  document.body.style.overflow='';
-}
-
-// Build game->teams for ALL 63 games using results to fill in R32+
-function buildAllGameTeams() {
-  var teams=Object.assign({}, GAME_TEAMS); // copy R64
-
-  // R32 game IDs paired with their R64 feeder games
-  var r32feeders=[
-    ['ER1',['E1','E2']], ['ER2',['E3','E4']], ['ER3',['E5','E6']], ['ER4',['E7','E8']],
-    ['SR1',['S1','S2']], ['SR2',['S3','S4']], ['SR3',['S5','S6']], ['SR4',['S7','S8']],
-    ['WR1',['W1','W2']], ['WR2',['W3','W4']], ['WR3',['W5','W6']], ['WR4',['W7','W8']],
-    ['MR1',['M1','M2']], ['MR2',['M3','M4']], ['MR3',['M5','M6']], ['MR4',['M7','M8']]
-  ];
-  var s16feeders=[
-    ['ES1',['ER1','ER2']], ['ES2',['ER3','ER4']],
-    ['SS1',['SR1','SR2']], ['SS2',['SR3','SR4']],
-    ['WS1',['WR1','WR2']], ['WS2',['WR3','WR4']],
-    ['MS1',['MR1','MR2']], ['MS2',['MR3','MR4']]
-  ];
-  var e8feeders=[
-    ['EE1',['ES1','ES2']], ['SE1',['SS1','SS2']],
-    ['WE1',['WS1','WS2']], ['ME1',['MS1','MS2']]
-  ];
-  var fffeeders=[
-    ['FF1',['EE1','WE1']], ['FF2',['SE1','ME1']]
-  ];
-  var champfeeders=[['CH1',['FF1','FF2']]];
-
-  function fillRound(feeders) {
-    feeders.forEach(function(pair) {
-      var gid=pair[0], feeders=pair[1];
-      var t1=results[feeders[0]]||('Winner of '+feeders[0]);
-      var t2=results[feeders[1]]||('Winner of '+feeders[1]);
-      teams[gid]={t1:t1,s1:'',t2:t2,s2:''};
-    });
-  }
-  fillRound(r32feeders);
-  fillRound(s16feeders);
-  fillRound(e8feeders);
-  fillRound(fffeeders);
-  fillRound(champfeeders);
-  return teams;
-}
-
-// Build bracket SVG with color-coded picks
-function buildBracketSVG(playerName, picks, allTeams) {
-  // Layout constants
-  var SW=140, SH=24, GAP=4, RCOL=SW+GAP;
-  var REGIONS=['East','South','West','Midwest'];
-  var REGION_GAMES={
-    East:  {r64:['E1','E2','E3','E4','E5','E6','E7','E8'],r32:['ER1','ER2','ER3','ER4'],s16:['ES1','ES2'],e8:['EE1']},
-    South: {r64:['S1','S2','S3','S4','S5','S6','S7','S8'],r32:['SR1','SR2','SR3','SR4'],s16:['SS1','SS2'],e8:['SE1']},
-    West:  {r64:['W1','W2','W3','W4','W5','W6','W7','W8'],r32:['WR1','WR2','WR3','WR4'],s16:['WS1','WS2'],e8:['WE1']},
-    Midwest:{r64:['M1','M2','M3','M4','M5','M6','M7','M8'],r32:['MR1','MR2','MR3','MR4'],s16:['MS1','MS2'],e8:['ME1']}
-  };
-
-  // Each region block: 8 R64 rows
-  // Left side (East top, South bottom), Right side (West top, Midwest bottom)
-  var ROWS=8, ROW_H=SH*2+GAP; // each R64 game = 2 slots
-  var REGION_H=ROWS*ROW_H;
-  var VGAP=16; // gap between East and South
-  var CENTER_W=SW*2+40;
-  var TOTAL_W=4*RCOL+CENTER_W;
-  var TOTAL_H=REGION_H*2+VGAP+60; // 60 for headers
-
-  var TOP_HDR=30;
-  var EAST_TOP=TOP_HDR;
-  var SOUTH_TOP=TOP_HDR+REGION_H+VGAP;
-  var CX=4*RCOL; // center left x
-
-  var p=[];
-  p.push('<svg xmlns="http://www.w3.org/2000/svg" width="'+TOTAL_W+'" height="'+TOTAL_H+'" style="background:#fff;display:block;font-family:Arial,sans-serif">');
-
-  // Column headers
-  var leftHdrs=['R64','R32','S16','E8'];
-  leftHdrs.forEach(function(lbl,ci) {
-    p.push('<text x="'+(ci*RCOL+SW/2)+'" y="14" text-anchor="middle" fill="#aaa" font-size="9" font-weight="bold">'+lbl+'</text>');
-  });
-  p.push('<text x="'+(TOTAL_W/2)+'" y="14" text-anchor="middle" fill="#aaa" font-size="9" font-weight="bold">FF / CHAMP</text>');
-  var rightHdrs=['E8','S16','R32','R64'];
-  rightHdrs.forEach(function(lbl,ci) {
-    p.push('<text x="'+(TOTAL_W-(ci*RCOL+SW/2))+'" y="14" text-anchor="middle" fill="#aaa" font-size="9" font-weight="bold">'+lbl+'</text>');
-  });
-  p.push('<line x1="0" y1="18" x2="'+TOTAL_W+'" y2="18" stroke="#eee" stroke-width="1"/>');
-
-  function getSlotColor(gid, teamName) {
-    var actual=results[gid];
-    var pick=picks[gid];
-    if(!pick || !teamName) return {fill:'#f9f9f9',stroke:'#eee',textColor:'#ccc'};
-    if(pick!==teamName) return {fill:'#fff',stroke:'#eee',textColor:'#bbb'}; // not picked
-    // This team was picked
-    if(!actual) return {fill:'#fff',stroke:'#555',textColor:'#000'}; // picked, not played
-    if(actual===pick) return {fill:'#c8e6c9',stroke:'#388e3c',textColor:'#1b5e20'}; // correct
-    return {fill:'#ffcdd2',stroke:'#e57373',textColor:'#b71c1c'}; // wrong
-  }
-
-  function drawSlot(x, y, gid, teamName, seed, strikethrough) {
-    var c=getSlotColor(gid, teamName);
-    var label=teamName||'';
-    if(label.length>14) label=label.substring(0,13)+'...';
-    p.push('<rect x="'+x+'" y="'+y+'" width="'+SW+'" height="'+(SH-2)+'" rx="2" fill="'+c.fill+'" stroke="'+c.stroke+'" stroke-width="1"/>');
-    if(seed) {
-      p.push('<rect x="'+x+'" y="'+y+'" width="16" height="'+(SH-2)+'" rx="2" fill="'+c.stroke+'"/>');
-      p.push('<text x="'+(x+8)+'" y="'+(y+(SH-2)/2+4)+'" text-anchor="middle" fill="#fff" font-size="8" font-weight="bold">'+seed+'</text>');
-    }
-    var tx=seed?x+20:x+4;
-    if(strikethrough && results[gid] && picks[gid]===teamName && results[gid]!==teamName) {
-      // strikethrough for wrong pick
-      p.push('<text x="'+tx+'" y="'+(y+(SH-2)/2+4)+'" fill="'+c.textColor+'" font-size="9" text-decoration="line-through">'+label+'</text>');
-    } else {
-      p.push('<text x="'+tx+'" y="'+(y+(SH-2)/2+4)+'" fill="'+c.textColor+'" font-size="9">'+label+'</text>');
-    }
-  }
-
-  function regionY(regionTop, roundIdx, gameIdx, slotIdx) {
-    // roundIdx 0=R64,1=R32,2=S16,3=E8
-    var span=Math.pow(2,roundIdx+1);
-    var half=Math.pow(2,roundIdx);
-    var off=half/2-0.5;
-    return regionTop+(gameIdx*span+(slotIdx===0?off:half+off))*(SH*2+GAP);
-  }
-
-  function drawRegionLeft(region, regionTop) {
-    var games=REGION_GAMES[region];
-    var rounds=[games.r64,games.r32,games.s16,games.e8];
-    // Region label
-    p.push('<text x="2" y="'+(regionTop-4)+'" fill="#888" font-size="8" font-weight="bold">'+region.toUpperCase()+'</text>');
-
-    rounds.forEach(function(roundGames,ri) {
-      roundGames.forEach(function(gid,gi) {
-        var gt=allTeams[gid]||{};
-        var y1=regionY(regionTop,ri,gi,0);
-        var y2=regionY(regionTop,ri,gi,1);
-        var x=ri*RCOL;
-        drawSlot(x,y1,gid,gt.t1,ri===0?gt.s1:'',true);
-        drawSlot(x,y2,gid,gt.t2,ri===0?gt.s2:'',true);
-        // connector
-        if(ri<3) {
-          var cy1=y1+SH-2, cy2=y2+SH-2, mx=(cy1+cy2)/2, nx=(ri+1)*RCOL;
-          var kx=x+SW+GAP/2;
-          p.push('<polyline points="'+(x+SW)+','+cy1+' '+kx+','+cy1+' '+kx+','+mx+' '+nx+','+mx+'" fill="none" stroke="#ddd" stroke-width="0.8"/>');
-          p.push('<polyline points="'+(x+SW)+','+cy2+' '+kx+','+cy2+' '+kx+','+mx+'" fill="none" stroke="#ddd" stroke-width="0.8"/>');
-        }
-      });
-    });
-  }
-
-  function drawRegionRight(region, regionTop) {
-    var games=REGION_GAMES[region];
-    var rounds=[games.r64,games.r32,games.s16,games.e8];
-    var TW=TOTAL_W;
-    p.push('<text x="'+(TW-2)+'" y="'+(regionTop-4)+'" fill="#888" font-size="8" font-weight="bold" text-anchor="end">'+region.toUpperCase()+'</text>');
-
-    rounds.forEach(function(roundGames,ri) {
-      roundGames.forEach(function(gid,gi) {
-        var gt=allTeams[gid]||{};
-        var y1=regionY(regionTop,ri,gi,0);
-        var y2=regionY(regionTop,ri,gi,1);
-        var x=TW-(ri+1)*RCOL;
-        drawSlot(x,y1,gid,gt.t1,ri===0?gt.s1:'',true);
-        drawSlot(x,y2,gid,gt.t2,ri===0?gt.s2:'',true);
-        if(ri<3) {
-          var cy1=y1+SH-2, cy2=y2+SH-2, mx=(cy1+cy2)/2, nx=TW-(ri+2)*RCOL+SW;
-          var kx=x-GAP/2;
-          p.push('<polyline points="'+x+','+cy1+' '+kx+','+cy1+' '+kx+','+mx+' '+nx+','+mx+'" fill="none" stroke="#ddd" stroke-width="0.8"/>');
-          p.push('<polyline points="'+x+','+cy2+' '+kx+','+cy2+' '+kx+','+mx+'" fill="none" stroke="#ddd" stroke-width="0.8"/>');
-        }
-      });
-    });
-  }
-
-  drawRegionLeft('East', EAST_TOP);
-  drawRegionLeft('South', SOUTH_TOP);
-  drawRegionRight('West', EAST_TOP);
-  drawRegionRight('Midwest', SOUTH_TOP);
-
-  // Final Four + Championship
-  var ff1Y=EAST_TOP+REGION_H/2-SH;
-  var ff2Y=SOUTH_TOP+REGION_H/2-SH;
-  var ffX=CX+10;
-  var ffRX=TOTAL_W-CX-10-SW;
-  var champY=(TOTAL_H-SH*2-GAP)/2;
-  var champX=(TOTAL_W-SW)/2;
-
-  // FF1: East vs West
-  var ff1=allTeams['FF1']||{};
-  drawSlot(ffX,ff1Y,'FF1',ff1.t1,'',true);
-  drawSlot(ffRX,ff1Y+SH,'FF1',ff1.t2,'',true);
-
-  // FF2: South vs Midwest
-  var ff2=allTeams['FF2']||{};
-  drawSlot(ffX,ff2Y,'FF2',ff2.t1,'',true);
-  drawSlot(ffRX,ff2Y+SH,'FF2',ff2.t2,'',true);
-
-  // Championship
-  var ch=allTeams['CH1']||{};
-  drawSlot(champX,champY,'CH1',ch.t1,'',true);
-  drawSlot(champX,champY+SH+GAP,'CH1',ch.t2,'',true);
-
-  // Connectors from E8 to FF
-  var e8midY=EAST_TOP+REGION_H/2;
-  var s8midY=SOUTH_TOP+REGION_H/2;
-  p.push('<line x1="'+(4*RCOL)+'" y1="'+e8midY+'" x2="'+ffX+'" y2="'+(ff1Y+SH/2)+'" stroke="#ddd" stroke-width="0.8"/>');
-  p.push('<line x1="'+(TOTAL_W-4*RCOL)+'" y1="'+e8midY+'" x2="'+(ffRX+SW)+'" y2="'+(ff1Y+SH+SH/2)+'" stroke="#ddd" stroke-width="0.8"/>');
-  p.push('<line x1="'+(4*RCOL)+'" y1="'+s8midY+'" x2="'+ffX+'" y2="'+(ff2Y+SH/2)+'" stroke="#ddd" stroke-width="0.8"/>');
-  p.push('<line x1="'+(TOTAL_W-4*RCOL)+'" y1="'+s8midY+'" x2="'+(ffRX+SW)+'" y2="'+(ff2Y+SH+SH/2)+'" stroke="#ddd" stroke-width="0.8"/>');
-  // FF to Champ
-  p.push('<line x1="'+(ffX+SW)+'" y1="'+(ff1Y+SH/2)+'" x2="'+champX+'" y2="'+(champY+SH/2)+'" stroke="#ddd" stroke-width="0.8"/>');
-  p.push('<line x1="'+(ffRX)+'" y1="'+(ff2Y+SH+SH/2)+'" x2="'+(champX+SW)+'" y2="'+(champY+SH+GAP+SH/2)+'" stroke="#ddd" stroke-width="0.8"/>');
-
-  p.push('</svg>');
-  return p.join('\n');
-}
-
-function showBracket(i) {
-  var entry=window._scored[i];
-  if(!entry) return;
-  var picks=entry.picks||{};
-  var allTeams=buildAllGameTeams();
-  var svgHtml=buildBracketSVG(entry.player_name, picks, allTeams);
-  var s=scoreEntry(picks);
-  var scoreStr=s.total+' pts  -  '+s.correct+' correct of '+s.gamesScored+' played';
-
-  var html='<div class="modal-overlay" id="modal-overlay" onclick="closeModalOverlay(event)">';
-  html+='<div class="modal-box">';
-  html+='<div class="modal-hdr">';
-  html+='<div class="modal-title">'+entry.player_name+' Bracket</div>';
-  html+='<div class="modal-score">'+scoreStr+'</div>';
-  html+='<button class="modal-close" onclick="closeModal()">&#10005; Close</button>';
-  html+='</div>';
-  html+='<div class="modal-legend">';
-  html+='<div class="legend-item"><div class="legend-dot" style="background:#c8e6c9;border:1px solid #388e3c"></div> Correct pick</div>';
-  html+='<div class="legend-item"><div class="legend-dot" style="background:#ffcdd2;border:1px solid #e57373"></div> Wrong pick</div>';
-  html+='<div class="legend-item"><div class="legend-dot" style="background:#fff;border:1px solid #555"></div> Picked, not played</div>';
-  html+='<div class="legend-item"><div class="legend-dot" style="background:#f9f9f9;border:1px solid #eee"></div> No pick</div>';
-  html+='</div>';
-  html+='<div class="modal-body">'+svgHtml+'</div>';
-  html+='</div></div>';
-
-  document.getElementById('modal').innerHTML=html;
-  document.getElementById('modal').style.display='block';
-  document.body.style.overflow='hidden';
-}
-
-function closeModal() {
-  document.getElementById('modal').style.display='none';
-  document.getElementById('modal').innerHTML='';
-  document.body.style.overflow='';
-}
-
-function closeModalOverlay(e) {
-  if(e.target.id==='modal-overlay') closeModal();
-}
-
-// close on Escape key
-document.addEventListener('keydown', function(e) {
-  if(e.key==='Escape') closeModal();
-});
 
 loadAll();
-setInterval(loadAll, 30000);
+setInterval(loadAll,30000);
 </script>
 </body>
 </html>

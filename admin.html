@@ -91,7 +91,7 @@ var ALL_GAMES=[
   {id:'ES1',region:'East',round:'Sweet 16',roundNum:2,team1:'ER1 Winner',seed1:'',team2:'ER2 Winner',seed2:''},
   {id:'ES2',region:'East',round:'Sweet 16',roundNum:2,team1:'ER3 Winner',seed1:'',team2:'ER4 Winner',seed2:''},
   {id:'EE1',region:'East',round:'Elite 8',roundNum:3,team1:'ES1 Winner',seed1:'',team2:'ES2 Winner',seed2:''},
-  {id:'S1',region:'South',round:'Round of 64',roundNum:0,team1:'Florida',seed1:1,team2:'PV / Lehigh',seed2:16},
+  {id:'S1',region:'South',round:'Round of 64',roundNum:0,team1:'Florida',seed1:1,team2:'Prairie View',seed2:16,team2b:'Lehigh',playin:true},
   {id:'S2',region:'South',round:'Round of 64',roundNum:0,team1:'Clemson',seed1:8,team2:'Iowa',seed2:9},
   {id:'S3',region:'South',round:'Round of 64',roundNum:0,team1:'Vanderbilt',seed1:5,team2:'McNeese',seed2:12},
   {id:'S4',region:'South',round:'Round of 64',roundNum:0,team1:'Nebraska',seed1:4,team2:'Troy',seed2:13},
@@ -110,7 +110,7 @@ var ALL_GAMES=[
   {id:'W2',region:'West',round:'Round of 64',roundNum:0,team1:'Villanova',seed1:8,team2:'Utah State',seed2:9},
   {id:'W3',region:'West',round:'Round of 64',roundNum:0,team1:'Wisconsin',seed1:5,team2:'High Point',seed2:12},
   {id:'W4',region:'West',round:'Round of 64',roundNum:0,team1:'Arkansas',seed1:4,team2:'Hawaii',seed2:13},
-  {id:'W5',region:'West',round:'Round of 64',roundNum:0,team1:'BYU',seed1:6,team2:'Tex / NC St.',seed2:11},
+  {id:'W5',region:'West',round:'Round of 64',roundNum:0,team1:'BYU',seed1:6,team2:'Texas',seed2:11,team2b:'NC State',playin:true},
   {id:'W6',region:'West',round:'Round of 64',roundNum:0,team1:'Gonzaga',seed1:3,team2:'Kennesaw St.',seed2:14},
   {id:'W7',region:'West',round:'Round of 64',roundNum:0,team1:'Miami',seed1:7,team2:'Missouri',seed2:10},
   {id:'W8',region:'West',round:'Round of 64',roundNum:0,team1:'Purdue',seed1:2,team2:'Queens',seed2:15},
@@ -121,11 +121,11 @@ var ALL_GAMES=[
   {id:'WS1',region:'West',round:'Sweet 16',roundNum:2,team1:'WR1 Winner',seed1:'',team2:'WR2 Winner',seed2:''},
   {id:'WS2',region:'West',round:'Sweet 16',roundNum:2,team1:'WR3 Winner',seed1:'',team2:'WR4 Winner',seed2:''},
   {id:'WE1',region:'West',round:'Elite 8',roundNum:3,team1:'WS1 Winner',seed1:'',team2:'WS2 Winner',seed2:''},
-  {id:'M1',region:'Midwest',round:'Round of 64',roundNum:0,team1:'Michigan',seed1:1,team2:'UMBC / Howard',seed2:16},
+  {id:'M1',region:'Midwest',round:'Round of 64',roundNum:0,team1:'Michigan',seed1:1,team2:'UMBC',seed2:16,team2b:'Howard',playin:true},
   {id:'M2',region:'Midwest',round:'Round of 64',roundNum:0,team1:'Georgia',seed1:8,team2:'Saint Louis',seed2:9},
   {id:'M3',region:'Midwest',round:'Round of 64',roundNum:0,team1:'Texas Tech',seed1:5,team2:'Akron',seed2:12},
   {id:'M4',region:'Midwest',round:'Round of 64',roundNum:0,team1:'Alabama',seed1:4,team2:'Hofstra',seed2:13},
-  {id:'M5',region:'Midwest',round:'Round of 64',roundNum:0,team1:'Tennessee',seed1:6,team2:'MIA OH / SMU',seed2:11},
+  {id:'M5',region:'Midwest',round:'Round of 64',roundNum:0,team1:'Tennessee',seed1:6,team2:'Miami OH',seed2:11,team2b:'SMU',playin:true},
   {id:'M6',region:'Midwest',round:'Round of 64',roundNum:0,team1:'Virginia',seed1:3,team2:'Wright State',seed2:14},
   {id:'M7',region:'Midwest',round:'Round of 64',roundNum:0,team1:'Kentucky',seed1:7,team2:'Santa Clara',seed2:10},
   {id:'M8',region:'Midwest',round:'Round of 64',roundNum:0,team1:'Iowa State',seed1:2,team2:'Tennessee St.',seed2:15},
@@ -253,7 +253,7 @@ function buildUI() {
       var winner = results[g.id] || '';
       var isSet = !!winner;
       var t1checked = winner === g.team1 ? 'checked' : '';
-      var t2checked = winner === g.team2 ? 'checked' : '';
+      var t2checked = (winner === g.team2 && !(g.playin && winner === g.team2b)) ? 'checked' : '';
       var disabledAttr = ready ? '' : 'disabled';
 
       // Show region label inline for context
@@ -267,16 +267,34 @@ function buildUI() {
       }
       resultsHtml += '</div>';
       resultsHtml += '<div class="team-options">';
+      // Team 1
       resultsHtml += '<div class="team-opt">';
       resultsHtml += '<input type="radio" name="game-' + g.id + '" id="r-' + g.id + '-1" value="' + g.team1 + '" ' + t1checked + ' ' + disabledAttr + ' onchange="saveResult(\'' + g.id + '\',\'' + g.team1.replace(/'/g,"\\'") + '\')">';
       resultsHtml += '<label for="r-' + g.id + '-1"' + (ready?'':' style="opacity:0.4;cursor:not-allowed"') + '>';
       if(g.seed1) resultsHtml += '<span class="seed-sm">(' + g.seed1 + ')</span>';
       resultsHtml += '<span>' + g.team1 + '</span></label></div>';
-      resultsHtml += '<div class="team-opt">';
-      resultsHtml += '<input type="radio" name="game-' + g.id + '" id="r-' + g.id + '-2" value="' + g.team2 + '" ' + t2checked + ' ' + disabledAttr + ' onchange="saveResult(\'' + g.id + '\',\'' + g.team2.replace(/'/g,"\\'") + '\')">';
-      resultsHtml += '<label for="r-' + g.id + '-2"' + (ready?'':' style="opacity:0.4;cursor:not-allowed"') + '>';
-      if(g.seed2) resultsHtml += '<span class="seed-sm">(' + g.seed2 + ')</span>';
-      resultsHtml += '<span>' + g.team2 + '</span></label></div>';
+      // Team 2 (or play-in pair)
+      if(g.playin && g.team2b) {
+        // Show team2 and team2b as separate options
+        var t2bVal = g.team2b;
+        var t2bchecked = winner === t2bVal ? 'checked' : '';
+        resultsHtml += '<div class="team-opt">';
+        resultsHtml += '<input type="radio" name="game-' + g.id + '" id="r-' + g.id + '-2" value="' + g.team2 + '" ' + t2checked + ' ' + disabledAttr + ' onchange="saveResult(\'' + g.id + '\',\'' + g.team2.replace(/'/g,"\\'") + '\')">';
+        resultsHtml += '<label for="r-' + g.id + '-2"' + (ready?'':' style="opacity:0.4;cursor:not-allowed"') + '>';
+        if(g.seed2) resultsHtml += '<span class="seed-sm">(' + g.seed2 + ')</span>';
+        resultsHtml += '<span>' + g.team2 + '</span></label></div>';
+        resultsHtml += '<div class="team-opt">';
+        resultsHtml += '<input type="radio" name="game-' + g.id + '" id="r-' + g.id + '-2b" value="' + t2bVal + '" ' + t2bchecked + ' ' + disabledAttr + ' onchange="saveResult(\'' + g.id + '\',\'' + t2bVal.replace(/'/g,"\\'") + '\')">';
+        resultsHtml += '<label for="r-' + g.id + '-2b"' + (ready?'':' style="opacity:0.4;cursor:not-allowed"') + '>';
+        if(g.seed2) resultsHtml += '<span class="seed-sm">(' + g.seed2 + ')</span>';
+        resultsHtml += '<span>' + t2bVal + '</span></label></div>';
+      } else {
+        resultsHtml += '<div class="team-opt">';
+        resultsHtml += '<input type="radio" name="game-' + g.id + '" id="r-' + g.id + '-2" value="' + g.team2 + '" ' + t2checked + ' ' + disabledAttr + ' onchange="saveResult(\'' + g.id + '\',\'' + g.team2.replace(/'/g,"\\'") + '\')">';
+        resultsHtml += '<label for="r-' + g.id + '-2"' + (ready?'':' style="opacity:0.4;cursor:not-allowed"') + '>';
+        if(g.seed2) resultsHtml += '<span class="seed-sm">(' + g.seed2 + ')</span>';
+        resultsHtml += '<span>' + g.team2 + '</span></label></div>';
+      }
       resultsHtml += '</div></div>';
     });
 

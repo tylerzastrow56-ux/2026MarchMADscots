@@ -192,21 +192,75 @@ function populateLaterRounds() {
 }
 
 function buildUI() {
-  var regions = ['East','South','West','Midwest','Final Four','Championship'];
-  var resultsHtml = '<div class="hint">Click a team to set them as winner. Results save instantly.</div>';
+  var ROUND_NAMES = ['Round of 64','Round of 32','Sweet 16','Elite 8','Final Four','Championship'];
+  var ROUND_IDS   = [0,1,2,3,4,5];
 
-  regions.forEach(function(region) {
-    var games = ALL_GAMES.filter(function(g) { return g.region === region; });
-    resultsHtml += '<div class="region-label">' + region + '</div>';
+  // Count how many games are set per round
+  function roundSetCount(rn) {
+    return ALL_GAMES.filter(function(g){ return g.roundNum===rn && results[g.id]; }).length;
+  }
+  function roundTotalCount(rn) {
+    return ALL_GAMES.filter(function(g){ return g.roundNum===rn; }).length;
+  }
+  // A round is ready to pick when all games in previous round are set
+  // (R64 always ready)
+  function roundReady(rn) {
+    if(rn===0) return true;
+    return roundSetCount(rn-1) === roundTotalCount(rn-1);
+  }
+  function roundComplete(rn) {
+    return roundSetCount(rn) === roundTotalCount(rn);
+  }
+
+  var resultsHtml = '<div class="hint">Games are grouped by round. Each round unlocks once the previous round is complete. Click a team to record the winner.</div>';
+
+  ROUND_IDS.forEach(function(rn) {
+    var games = ALL_GAMES.filter(function(g){ return g.roundNum===rn; });
+    var setCount = roundSetCount(rn);
+    var total = games.length;
+    var ready = roundReady(rn);
+    var complete = roundComplete(rn);
+
+    // Round header
+    var headerStyle = ready ? 'cursor:pointer;' : 'cursor:default;opacity:0.45;';
+    var statusBadge = complete
+      ? '<span style="background:#000;color:#fff;font-family:Oswald,sans-serif;font-size:9px;font-weight:700;letter-spacing:1px;padding:2px 8px;border-radius:2px;text-transform:uppercase;margin-left:8px">&#10003; Complete</span>'
+      : ready
+        ? '<span style="background:#f0f0f0;color:#555;font-family:Oswald,sans-serif;font-size:9px;font-weight:700;letter-spacing:1px;padding:2px 8px;border-radius:2px;text-transform:uppercase;margin-left:8px">' + setCount + ' / ' + total + '</span>'
+        : '<span style="background:#f0f0f0;color:#aaa;font-family:Oswald,sans-serif;font-size:9px;letter-spacing:1px;padding:2px 8px;border-radius:2px;text-transform:uppercase;margin-left:8px">Locked</span>';
+
+    var sectionId = 'round-section-' + rn;
+    // Default: expand current active round, collapse others
+    var expanded = ready && !complete ? 'block' : (complete ? 'none' : 'none');
+    // Always show R64 if nothing set yet
+    if(rn===0 && setCount===0) expanded = 'block';
+    // Show most recently active round
+    if(ready && !complete) expanded = 'block';
+
+    resultsHtml += '<div style="border:1px solid ' + (complete?'#ccc':ready?'#000':'#e0e0e0') + ';border-radius:6px;margin-bottom:10px;overflow:hidden;">';
+    resultsHtml += '<div style="' + headerStyle + 'display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:' + (complete?'#f5f5f5':ready?'#fff':'#fafafa') + '" onclick="' + (ready?'toggleRound(\''+sectionId+'\')':'') + '">';
+    resultsHtml += '<div style="display:flex;align-items:center">';
+    resultsHtml += '<span style="font-family:Oswald,sans-serif;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:1px">' + ROUND_NAMES[rn] + '</span>';
+    resultsHtml += statusBadge;
+    resultsHtml += '</div>';
+    if(ready) resultsHtml += '<span id="arrow-' + rn + '" style="font-size:12px;color:#888">' + (expanded==='block'?'&#9650;':'&#9660;') + '</span>';
+    resultsHtml += '</div>';
+
+    // Games inside this round
+    resultsHtml += '<div id="' + sectionId + '" style="display:' + expanded + ';padding:10px 12px;">';
+
     games.forEach(function(g) {
       var winner = results[g.id] || '';
       var isSet = !!winner;
       var t1checked = winner === g.team1 ? 'checked' : '';
       var t2checked = winner === g.team2 ? 'checked' : '';
-      resultsHtml += '<div class="game-row ' + (isSet?'is-set':'') + '" id="row-' + g.id + '">';
+      var disabledAttr = ready ? '' : 'disabled';
+
+      // Show region label inline for context
+      resultsHtml += '<div class="game-row ' + (isSet?'is-set':'') + '" id="row-' + g.id + '" style="margin-bottom:8px">';
       resultsHtml += '<div class="game-meta">';
       resultsHtml += '<div class="game-id">' + g.id + '</div>';
-      resultsHtml += '<div class="game-desc">' + g.round + '</div>';
+      resultsHtml += '<div class="game-desc" style="color:#aaa">' + g.region + '</div>';
       if(isSet) {
         resultsHtml += '<span class="winner-tag">&#10003; ' + winner + '</span>';
         resultsHtml += '<button class="clear-btn" onclick="clearResult(\'' + g.id + '\')">&#10005; Clear</button>';
@@ -214,17 +268,19 @@ function buildUI() {
       resultsHtml += '</div>';
       resultsHtml += '<div class="team-options">';
       resultsHtml += '<div class="team-opt">';
-      resultsHtml += '<input type="radio" name="game-' + g.id + '" id="r-' + g.id + '-1" value="' + g.team1 + '" ' + t1checked + ' onchange="saveResult(\'' + g.id + '\',\'' + g.team1.replace(/'/g,"\\'") + '\')">';
-      resultsHtml += '<label for="r-' + g.id + '-1">';
+      resultsHtml += '<input type="radio" name="game-' + g.id + '" id="r-' + g.id + '-1" value="' + g.team1 + '" ' + t1checked + ' ' + disabledAttr + ' onchange="saveResult(\'' + g.id + '\',\'' + g.team1.replace(/'/g,"\\'") + '\')">';
+      resultsHtml += '<label for="r-' + g.id + '-1"' + (ready?'':' style="opacity:0.4;cursor:not-allowed"') + '>';
       if(g.seed1) resultsHtml += '<span class="seed-sm">(' + g.seed1 + ')</span>';
       resultsHtml += '<span>' + g.team1 + '</span></label></div>';
       resultsHtml += '<div class="team-opt">';
-      resultsHtml += '<input type="radio" name="game-' + g.id + '" id="r-' + g.id + '-2" value="' + g.team2 + '" ' + t2checked + ' onchange="saveResult(\'' + g.id + '\',\'' + g.team2.replace(/'/g,"\\'") + '\')">';
-      resultsHtml += '<label for="r-' + g.id + '-2">';
+      resultsHtml += '<input type="radio" name="game-' + g.id + '" id="r-' + g.id + '-2" value="' + g.team2 + '" ' + t2checked + ' ' + disabledAttr + ' onchange="saveResult(\'' + g.id + '\',\'' + g.team2.replace(/'/g,"\\'") + '\')">';
+      resultsHtml += '<label for="r-' + g.id + '-2"' + (ready?'':' style="opacity:0.4;cursor:not-allowed"') + '>';
       if(g.seed2) resultsHtml += '<span class="seed-sm">(' + g.seed2 + ')</span>';
       resultsHtml += '<span>' + g.team2 + '</span></label></div>';
       resultsHtml += '</div></div>';
     });
+
+    resultsHtml += '</div></div>'; // close games div + round card
   });
 
   var entriesHtml = '<div class="hint">All submitted and in-progress brackets. Delete removes the entry permanently.</div>';
@@ -258,6 +314,20 @@ function buildUI() {
     '<div id="tab-entries" style="display:' + (curTab==='entries'?'block':'none') + '">' + entriesHtml + '</div>' +
     '</div>';
 }
+
+function toggleRound(sectionId) {
+  var el = document.getElementById(sectionId);
+  var rn = parseInt(sectionId.replace('round-section-',''));
+  var arrow = document.getElementById('arrow-' + rn);
+  if(el.style.display === 'none') {
+    el.style.display = 'block';
+    if(arrow) arrow.innerHTML = '&#9650;';
+  } else {
+    el.style.display = 'none';
+    if(arrow) arrow.innerHTML = '&#9660;';
+  }
+}
+
 
 function switchTab(btn, tab) {
   curTab = tab;

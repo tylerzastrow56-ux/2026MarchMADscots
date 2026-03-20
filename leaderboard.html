@@ -116,11 +116,57 @@ function scoreEntry(picks) {
   return {total, byRound, correct, gamesScored};
 }
 
+function getEliminatedTeams() {
+  // Build set of teams that have lost a completed game
+  const eliminated = new Set();
+  // We need to know both teams in each game to find the loser
+  // ALL_GAME_TEAMS maps game_id -> [team1, team2] from the results we have
+  // We can infer losers: for each completed game, the non-winner lost
+  // But we only have winner names in results{}, not the matchup details.
+  // So we track it differently: a team is still alive if they either
+  // (a) haven't played yet, or (b) won their last played game.
+  // Build a "winners so far" set from all completed games
+  const winners = new Set(Object.values(results));
+  // For each completed game, we need to know who the loser was.
+  // We do this by checking: for every pick a player made in a completed game,
+  // if their pick != actual winner, that team is eliminated.
+  // But for maxPossible we check PER PLAYER, so we do it inline below.
+  return winners; // return winners set; we'll check per-pick below
+}
+
 function maxPossible(picks) {
+  // A pick can still score if:
+  // 1. The game hasn't been played yet (!results[gid])
+  // 2. AND the team they picked hasn't already lost a game
+  //
+  // To find eliminated teams: scan all completed games and collect losers
+  const eliminated = new Set();
+  ROUND_GAME_IDS.forEach((ids, ri) => {
+    ids.forEach(gid => {
+      const actual = results[gid];
+      if (!actual) return; // not played yet
+      // Find what the other team was - look at what pick was made vs winner
+      // We know the winner; we need to mark the loser eliminated.
+      // The loser is: whoever the player picked for games they got WRONG
+      // Actually we need to know both teams per game regardless of picks.
+      // We'll use picks themselves: if someone picked team X in game G and
+      // team X lost, team X is eliminated for ALL future rounds.
+      const pick = picks[gid];
+      if (pick && pick !== actual) {
+        eliminated.add(pick);
+      }
+    });
+  });
+
   let possible = 0;
   ROUND_GAME_IDS.forEach((ids, ri) => {
     ids.forEach(gid => {
-      if (!results[gid] && picks[gid]) possible += POINTS[ri];
+      if (results[gid]) return; // already played, can't score more here
+      const pick = picks[gid];
+      if (!pick) return; // no pick made
+      if (!eliminated.has(pick)) {
+        possible += POINTS[ri]; // team still alive, points still possible
+      }
     });
   });
   return possible;
